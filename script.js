@@ -4,6 +4,9 @@ const bottomPlayer = document.querySelector(".bottom-player");
 // Je récupère les chrono de chaque zone
 const topTimer = document.getElementById("chrono-top-player");
 const bottomTimer = document.getElementById("chrono-bottom-player");
+
+const timeSelect = document.getElementById("time-select")
+const chooseMinutes = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30]
 // On déclare les variables minutes et secondes du top-player
 let topMinutes = 5;
 let topSeconds = 0;
@@ -30,7 +33,32 @@ bottomSeconds = formatSeconds(bottomSeconds);
 topTimer.textContent = topMinutes + " : " + topSeconds;
 bottomTimer.textContent = bottomMinutes + " : " + bottomSeconds;
 
-play()
+// On parcourt chaque élément du tableau
+chooseMinutes.forEach(element => {
+    // 1️⃣ On crée un nouvel élément <option> pour le select
+    const option = document.createElement("option");
+    
+    // 2️⃣ On définit la valeur de l'option
+    option.value = element;
+    
+    // 3️⃣ On définit le texte visible dans le menu déroulant
+    option.textContent = element;
+    
+    // 4️⃣ On ajoute l'option au select
+    timeSelect.appendChild(option);
+});
+
+timeSelect.addEventListener("change", () => {
+    topMinutes = parseInt(timeSelect.value);
+    bottomMinutes = parseInt(timeSelect.value);
+
+    topTimer.textContent = topMinutes + " : " + topSeconds;
+    bottomTimer.textContent = bottomMinutes + " : " + bottomSeconds;
+});
+
+
+
+// play()
 
 function togglePlayer() {
     if (activePlayer === "top") {
@@ -85,3 +113,6 @@ function play() {
     clearInterval(timerInterval); // On stoppe le chrono précédent
     timerInterval = setInterval(startTimer, 1000); // On déclenche le tick toutes les secondes
 }
+
+
+
