@@ -7,11 +7,16 @@ const bottomTimer = document.getElementById("chrono-bottom-player");
 
 const timeSelect = document.getElementById("time-select")
 const chooseMinutes = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30]
+
+const startGame = document.getElementById("start")
+const modal = document.querySelector(".modal")
+const overlay = document.querySelector(".overlay")
+
 // On déclare les variables minutes et secondes du top-player
-let topMinutes = 5;
+let topMinutes = chooseMinutes[0];
 let topSeconds = 0;
 // On déclare les variables minutes et secondes du bottom-player
-let bottomMinutes = 5;
+let bottomMinutes = chooseMinutes[0];
 let bottomSeconds = 0;
 
 let activePlayer = "top";
@@ -42,23 +47,27 @@ chooseMinutes.forEach(element => {
     option.value = element;
     
     // 3️⃣ On définit le texte visible dans le menu déroulant
-    option.textContent = element;
+    option.textContent = element + " min";
     
     // 4️⃣ On ajoute l'option au select
     timeSelect.appendChild(option);
 });
 
+// Faire disparaitre l'affichage par défaut de paramètres lorsqu'on clique sur commencer 
+startGame.addEventListener("click", () => {
+    modal.style.display = "none";
+    overlay.style.display = "none";
+    play();
+})
+
+
 timeSelect.addEventListener("change", () => {
     topMinutes = parseInt(timeSelect.value);
     bottomMinutes = parseInt(timeSelect.value);
-
+    
     topTimer.textContent = topMinutes + " : " + topSeconds;
     bottomTimer.textContent = bottomMinutes + " : " + bottomSeconds;
 });
-
-
-
-// play()
 
 function togglePlayer() {
     if (activePlayer === "top") {
@@ -113,6 +122,5 @@ function play() {
     clearInterval(timerInterval); // On stoppe le chrono précédent
     timerInterval = setInterval(startTimer, 1000); // On déclenche le tick toutes les secondes
 }
-
 
 
