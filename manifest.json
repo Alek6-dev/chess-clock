@@ -1,0 +1,11 @@
+{
+  "name": "Chess Clock",
+  "short_name": "Chess Clock App",
+  "start_url": "https://alek6-dev.github.io/chess-clock/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+
+  ]
+}
