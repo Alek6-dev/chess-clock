@@ -19,7 +19,7 @@ let topSeconds = 0;
 let bottomMinutes = chooseMinutes[0];
 let bottomSeconds = 0;
 
-let activePlayer = "top";
+let activePlayer = "bottom";
 
 let timerInterval = null;
 
