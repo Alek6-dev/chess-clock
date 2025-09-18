@@ -18,8 +18,8 @@ body {
 .modal {
     background: rgb(235, 232, 216);
     border-radius: 20px;
-    width: 60%;
-    height: 50%;
+    width: 600px;
+    height: 400px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -35,7 +35,10 @@ body {
 }
 h1 {
     font-family: figtree;
-    margin-top: 20%;
+    font-size: 2rem;
+    margin-top: 50px;
+    padding: 0 50px;
+    text-align: center;
 }
 .select-list {
     width: 30%;
@@ -107,4 +110,34 @@ h1 {
     justify-content: center;
     align-items: center;
     font-size: 4rem;
+}
+
+@media (max-width: 850px) {
+  .modal {
+    width: 450px;       /* occupe presque toute la largeur de l’écran */
+    height: 450px;     /* s’adapte au contenu */
+    max-height: 80%;  /* évite de déborder */
+  }
+  h1 {
+    font-size: 1.4rem;
+  }
+}
+@media (max-width: 480px) {
+    .modal {
+        width: 250px;       /* occupe presque toute la largeur de l’écran */
+        height: 350px;     /* s’adapte au contenu */
+        max-height: 80%;  /* évite de déborder */
+    }
+    h1 {
+        font-size: 1.2rem;
+        line-height: 25px;
+    }
+    .select-list {
+        width: 100px;
+        font-size: 1rem;
+    }
+    .start-btn {
+        width: 150px;
+        font-size: 1rem;
+    }
 }
