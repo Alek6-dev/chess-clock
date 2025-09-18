@@ -5,6 +5,10 @@ const bottomPlayer = document.querySelector(".bottom-player");
 const topTimer = document.getElementById("chrono-top-player");
 const bottomTimer = document.getElementById("chrono-bottom-player");
 
+// On récupère aussi les chrono opponent 
+const opponentTop = document.getElementById("opponent-top");
+const opponentBottom = document.getElementById("opponent-bottom");
+
 const timeSelect = document.getElementById("time-select")
 const chooseMinutes = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30]
 
@@ -35,8 +39,10 @@ function formatSeconds(seconds) {
 topSeconds = formatSeconds(topSeconds);
 bottomSeconds = formatSeconds(bottomSeconds);
 
-topTimer.textContent = topMinutes + " : " + topSeconds;
-bottomTimer.textContent = bottomMinutes + " : " + bottomSeconds;
+topTimer.textContent = topMinutes + ":" + topSeconds;
+bottomTimer.textContent = bottomMinutes + ":" + bottomSeconds;
+opponentTop.textContent = bottomMinutes + ":" + bottomSeconds;
+opponentBottom.textContent = topMinutes + ":" + topSeconds;
 
 // On parcourt chaque élément du tableau
 chooseMinutes.forEach(element => {
@@ -65,8 +71,10 @@ timeSelect.addEventListener("change", () => {
     topMinutes = parseInt(timeSelect.value);
     bottomMinutes = parseInt(timeSelect.value);
     
-    topTimer.textContent = topMinutes + " : " + topSeconds;
-    bottomTimer.textContent = bottomMinutes + " : " + bottomSeconds;
+    topTimer.textContent = topMinutes + ":" + topSeconds;
+    bottomTimer.textContent = bottomMinutes + ":" + bottomSeconds;
+    opponentTop.textContent = bottomMinutes + ":" + bottomSeconds;
+    opponentBottom.textContent = topMinutes + ":" + topSeconds;
 });
 
 function togglePlayer() {
@@ -96,7 +104,8 @@ function startTimer() {
             topMinutes--;
             topSeconds = 59;
         }
-        topTimer.textContent = topMinutes + " : " + formatSeconds(topSeconds);
+        topTimer.textContent = topMinutes + ":" + formatSeconds(topSeconds);
+        opponentBottom.textContent = topMinutes + ":" + formatSeconds(topSeconds);
         if (topMinutes === 0 && topSeconds === 0) {
             clearInterval(timerInterval);
             alert("Top player a perdu !");
@@ -109,7 +118,8 @@ function startTimer() {
             bottomMinutes--;
             bottomSeconds = 59;
         }
-        bottomTimer.textContent = bottomMinutes + " : " + formatSeconds(bottomSeconds);
+        bottomTimer.textContent = bottomMinutes + ":" + formatSeconds(bottomSeconds);
+        opponentTop.textContent = bottomMinutes + ":" + formatSeconds(bottomSeconds);
         if (bottomMinutes === 0 && bottomSeconds === 0) {
             clearInterval(timerInterval);
             alert("Bottom player a perdu !");
