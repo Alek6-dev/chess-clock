@@ -1,0 +1,20 @@
+# Journal de bord personnel, non partagé
+journal de bord.md
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+*.apk
+*.aab
+
+# iOS (projet généré par XcodeGen, jamais committé)
+ios/ChessClock.xcodeproj/
+ios/DerivedData/
+ios/.build/
+**/xcuserdata/
+
+# Système
+.DS_Store
