@@ -1,0 +1,41 @@
+name: Android - Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Générer le wrapper Gradle
+        run: |
+          mkdir -p /tmp/gradle-wrapper-gen
+          cd /tmp/gradle-wrapper-gen
+          touch settings.gradle.kts
+          gradle wrapper --gradle-version 8.9
+          cp -r gradle "$GITHUB_WORKSPACE/android/"
+          cp gradlew gradlew.bat "$GITHUB_WORKSPACE/android/"
+          chmod +x "$GITHUB_WORKSPACE/android/gradlew"
+
+      - name: Build APK debug
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Publier l'APK en artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chess-clock-debug-apk
+          path: android/app/build/outputs/**/*.apk
