@@ -9,8 +9,16 @@ workflows:
     scripts:
       - name: Générer le wrapper Gradle
         script: |
-          cd android
+          # Génération dans un dossier vide : le Gradle système installé sur
+          # l'agent est trop ancien pour évaluer notre build.gradle.kts (AGP
+          # exige Gradle ≥ 8.7), donc on ne le laisse pas configurer notre
+          # projet. On copie ensuite le wrapper généré dans android/.
+          mkdir -p /tmp/gradle-wrapper-gen
+          cd /tmp/gradle-wrapper-gen
           gradle wrapper --gradle-version 8.9
+          cp -r gradle "$CM_BUILD_DIR/android/"
+          cp gradlew gradlew.bat "$CM_BUILD_DIR/android/"
+          chmod +x "$CM_BUILD_DIR/android/gradlew"
       - name: Build APK debug
         script: |
           cd android
