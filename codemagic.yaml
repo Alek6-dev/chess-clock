@@ -15,6 +15,7 @@ workflows:
           # projet. On copie ensuite le wrapper généré dans android/.
           mkdir -p /tmp/gradle-wrapper-gen
           cd /tmp/gradle-wrapper-gen
+          touch settings.gradle.kts
           gradle wrapper --gradle-version 8.9
           cp -r gradle "$CM_BUILD_DIR/android/"
           cp gradlew gradlew.bat "$CM_BUILD_DIR/android/"
