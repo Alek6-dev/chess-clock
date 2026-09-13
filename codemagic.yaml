@@ -1,0 +1,51 @@
+workflows:
+  android-workflow:
+    name: Android - Build
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      vars:
+        PACKAGE_NAME: "com.alek6dev.chessclock"
+    scripts:
+      - name: Générer le wrapper Gradle
+        script: |
+          cd android
+          gradle wrapper --gradle-version 8.9
+      - name: Build APK debug
+        script: |
+          cd android
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+  ios-workflow:
+    name: iOS - Build
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      vars:
+        BUNDLE_ID: "com.alek6dev.chessclock"
+    scripts:
+      - name: Générer le projet Xcode avec XcodeGen
+        script: |
+          brew install xcodegen
+          cd ios
+          xcodegen generate
+      - name: Build de validation (simulateur, sans signature)
+        script: |
+          cd ios
+          xcodebuild -project ChessClock.xcodeproj -scheme ChessClock \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true

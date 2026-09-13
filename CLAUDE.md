@@ -12,10 +12,12 @@ Rebuild quasi complet d'un premier projet web vanilla JS (chess clock fait à la
 - **Base de données : aucune** — stockage local uniquement (préférences utilisateur : temps par défaut, options), pas de backend, pas de compte, pas de paiement.
 - **Auth : aucune** — app 100% locale, pas de notion d'utilisateur distant.
 - **Hébergement : aucun serveur** — app purement client, s'exécute entièrement sur l'appareil.
-- **CI/CD : Codemagic** — déjà utilisé et maîtrisé par l'utilisateur pour son premier app (Next.js/React encapsulé via TestFlight). Build Android également possible en local (Android Studio, Linux) ; build/signature iOS uniquement via Codemagic (VM macOS cloud), aucun Xcode local disponible.
+- **CI/CD : Codemagic** — déjà utilisé et maîtrisé par l'utilisateur pour son premier app (Next.js/React encapsulé via TestFlight). Build/signature iOS uniquement via Codemagic (VM macOS cloud), aucun Xcode local disponible. Build Android également via Codemagic pour la CI, mais l'utilisateur installe Android Studio sur sa machine Windows (hors WSL2) pour tester en local sur un vrai appareil Android en USB (émulateur écarté : virtualisation imbriquée peu fiable depuis WSL2).
+- **Génération du projet Xcode : XcodeGen** — le `.xcodeproj` n'est jamais écrit à la main (format fragile, invalidable sans Xcode local) ; il est généré à partir de `ios/project.yml` par Codemagic juste avant le build, à chaque run CI.
 
 ### Risques acceptés consciemment
 
 - **Boucle de développement iOS lente** : pas de Mac local, donc pas de Simulator ni de SwiftUI Previews en local. Chaque itération visuelle nécessite un cycle CI complet (Codemagic) + installation via TestFlight. Accepté consciemment — même workflow que pour la première app, pas de Mac distant envisagé pour l'instant, pas de besoin de rush.
+- **L'environnement Claude Code n'a aucun toolchain installé** (pas de JDK/Gradle/SDK Android, pas de Swift) : aucun code n'est compilé ni testé localement par l'assistant, ni pour Android ni pour iOS. La vérification passe systématiquement par Codemagic (les deux plateformes), et par Android Studio en local côté utilisateur pour Android uniquement.
 - **Deux codebases à maintenir en parallèle** (Swift + Kotlin) au lieu d'une seule — accepté car l'objectif explicite est justement de comparer cette approche à l'encapsulation utilisée sur la première app.
 - **Robustesse "par appareil" plutôt que scalabilité serveur** : "1000 joueurs simultanés" ne concerne pas une infra partagée (il n'y en a pas) mais la fiabilité du moteur de chrono sur chaque appareil pris individuellement (dérive de timer, comportement en arrière-plan, cycle de vie OS) — à traiter au moment de l'implémentation du chrono, pas comme un sujet d'infra.
