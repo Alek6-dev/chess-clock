@@ -12,81 +12,183 @@ struct GameSetupView: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Text("Choisis le temps de ta partie")
-                .font(.title2)
-                .multilineTextAlignment(.center)
+        ZStack {
+            RuledBackground(baseColor: ChessClockColors.paper, lineColor: ChessClockColors.leather.opacity(0.07))
+                .ignoresSafeArea()
+            InkStainOverlay()
+                .ignoresSafeArea()
 
-            Toggle(
-                "Temps identique pour les deux joueurs",
-                isOn: Binding(
-                    get: { sameTimeForBoth },
-                    set: { newValue in
-                        sameTimeForBoth = newValue
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Configuration")
+                    .font(ChessClockFonts.instrumentSerif(34))
+                    .foregroundColor(ChessClockColors.inkSurface)
+
+                Rectangle()
+                    .fill(ChessClockColors.leather.opacity(0.45))
+                    .frame(height: 1)
+                    .padding(.vertical, 22)
+
+                CheckboxRow(
+                    checked: sameTimeForBoth,
+                    onToggle: {
+                        sameTimeForBoth.toggle()
                         // Si on repasse en "temps identique", le temps des Blancs s'applique aux deux.
-                        if newValue {
+                        if sameTimeForBoth {
                             blackTime = whiteTime
                         }
                     }
                 )
-            )
-            .padding(.horizontal)
 
-            if sameTimeForBoth {
-                TimeWheelRow(
-                    label: nil,
-                    time: Binding(
-                        get: { whiteTime },
-                        set: { newTime in
-                            whiteTime = newTime
-                            if sameTimeForBoth {
-                                blackTime = newTime
+                Spacer().frame(height: 32)
+
+                if sameTimeForBoth {
+                    TimeWheelRow(
+                        swatch: nil,
+                        time: Binding(
+                            get: { whiteTime },
+                            set: { newTime in
+                                whiteTime = newTime
+                                if sameTimeForBoth {
+                                    blackTime = newTime
+                                }
                             }
-                        }
+                        )
                     )
-                )
-            } else {
-                TimeWheelRow(label: "Blancs", time: $whiteTime)
-                TimeWheelRow(label: "Noirs", time: $blackTime)
-            }
+                } else {
+                    TimeWheelRow(swatch: .white, time: $whiteTime)
+                    Spacer().frame(height: 24)
+                    TimeWheelRow(swatch: .black, time: $blackTime)
+                }
 
-            Button("Démarrer") {
-                onStartGame(whiteTime, blackTime)
+                Spacer()
+
+                StartButton(enabled: canStart) {
+                    onStartGame(whiteTime, blackTime)
+                }
             }
-            .disabled(!canStart)
-            .buttonStyle(.borderedProminent)
+            .padding(.horizontal, 30)
+            .padding(.top, 76)
+            .padding(.bottom, 44)
         }
-        .padding()
     }
 }
 
+private struct CheckboxRow: View {
+    let checked: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                if checked {
+                    Rectangle().fill(ChessClockColors.inkSurface)
+                    Text("✓")
+                        .foregroundColor(ChessClockColors.paper)
+                        .font(.system(size: 15))
+                } else {
+                    Rectangle()
+                        .stroke(ChessClockColors.leather, lineWidth: 1)
+                }
+            }
+            .frame(width: 22, height: 22)
+
+            Text("Temps identique pour les deux joueurs")
+                .font(ChessClockFonts.ebGaramond(18))
+                .foregroundColor(ChessClockColors.inkSurface)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onToggle)
+    }
+}
+
+private enum CampSwatch { case white, black }
+
 private struct TimeWheelRow: View {
-    let label: String?
+    let swatch: CampSwatch?
     @Binding var time: GameTime
 
     var body: some View {
-        VStack {
-            if let label {
-                Text(label).font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            if let swatch {
+                Group {
+                    if swatch == .white {
+                        Rectangle()
+                            .fill(ChessClockColors.ivory)
+                            .overlay(Rectangle().stroke(ChessClockColors.leather, lineWidth: 1))
+                    } else {
+                        Rectangle().fill(ChessClockColors.leather)
+                    }
+                }
+                .frame(width: 30, height: 9)
             }
-            HStack {
+
+            HStack(spacing: 8) {
                 Picker("Minutes", selection: $time.minutes) {
                     ForEach(0..<60) { value in
-                        Text("\(value) min").tag(value)
+                        Text("\(value)").tag(value)
                     }
                 }
                 .pickerStyle(.wheel)
-                .frame(width: 100)
+                .frame(width: 90)
+
+                Text("min")
+                    .font(ChessClockFonts.ebGaramond(15))
+                    .foregroundColor(ChessClockColors.leather)
 
                 Picker("Secondes", selection: $time.seconds) {
                     ForEach(0..<60) { value in
-                        Text("\(value) s").tag(value)
+                        Text("\(value)").tag(value)
                     }
                 }
                 .pickerStyle(.wheel)
-                .frame(width: 100)
+                .frame(width: 90)
+
+                Text("s")
+                    .font(ChessClockFonts.ebGaramond(15))
+                    .foregroundColor(ChessClockColors.leather)
             }
         }
+    }
+}
+
+private struct StartButton: View {
+    let enabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text("DÉMARRER")
+                .font(ChessClockFonts.ebGaramond(14, weight: .semiBold))
+                .tracking(2)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 22)
+                .foregroundColor(enabled ? ChessClockColors.inkNight : ChessClockColors.leather.opacity(0.55))
+                .background(
+                    Group {
+                        if enabled {
+                            LinearGradient(
+                                colors: [
+                                    ChessClockColors.brass.opacity(0.7),
+                                    ChessClockColors.ivory.opacity(0.4),
+                                    ChessClockColors.brass,
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        } else {
+                            Color.clear
+                        }
+                    }
+                )
+                .overlay(
+                    Group {
+                        if !enabled {
+                            Rectangle().stroke(ChessClockColors.leather.opacity(0.45), lineWidth: 1)
+                        }
+                    }
+                )
+        }
+        .disabled(!enabled)
     }
 }
 
