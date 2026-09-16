@@ -101,18 +101,21 @@ fun GameSetupScreen(
                     swatch = null,
                     time = whiteTime,
                     onTimeChange = ::updateWhiteTime,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             } else {
                 TimeWheelRow(
                     swatch = CampSwatch.WHITE,
                     time = whiteTime,
                     onTimeChange = ::updateWhiteTime,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(24.dp))
                 TimeWheelRow(
                     swatch = CampSwatch.BLACK,
                     time = blackTime,
                     onTimeChange = { blackTime = it },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
@@ -176,7 +179,7 @@ private fun TimeWheelRow(
     onTimeChange: (GameTime) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         if (swatch != null) {
             Box(
                 modifier = Modifier

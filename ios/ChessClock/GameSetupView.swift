@@ -54,10 +54,13 @@ struct GameSetupView: View {
                             }
                         )
                     )
+                    .frame(maxWidth: .infinity)
                 } else {
                     TimeWheelRow(swatch: .white, time: $whiteTime)
+                        .frame(maxWidth: .infinity)
                     Spacer().frame(height: 24)
                     TimeWheelRow(swatch: .black, time: $blackTime)
+                        .frame(maxWidth: .infinity)
                 }
 
                 Spacer()
@@ -108,7 +111,7 @@ private struct TimeWheelRow: View {
     @Binding var time: GameTime
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .center, spacing: 12) {
             if let swatch {
                 Group {
                     if swatch == .white {

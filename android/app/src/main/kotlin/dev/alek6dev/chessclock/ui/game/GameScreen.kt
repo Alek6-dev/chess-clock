@@ -138,8 +138,13 @@ private fun PlayerZone(
     val ruleColor = if (isBlack) Color(0x2917110D) else Color(0x126B5236)
     val activeColor = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
     val inactiveColor = activeColor.copy(alpha = 0.6f)
+    // Couleur du pion = identité du camp (toujours la même), indépendante de la matière de
+    // la zone où il se trouve — contrairement à la couleur du chiffre, choisie pour la
+    // lisibilité sur sa propre zone.
+    val campColor = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
+    val opponentCampColor = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
+    val pawnColor = campColor.copy(alpha = if (isActive) 1f else 0.6f)
     val badgeBorderColor = if (isBlack) ChessClockColors.Ivory.copy(alpha = 0.28f) else ChessClockColors.Leather.copy(alpha = 0.45f)
-    val badgeDotColor = if (isBlack) ChessClockColors.Ivory else ChessClockColors.LineRule
     val badgeTextColor = if (isBlack) ChessClockColors.Ivory.copy(alpha = 0.8f) else ChessClockColors.Leather
 
     Box(
@@ -150,18 +155,24 @@ private fun PlayerZone(
     ) {
         RuledBackground(baseColor = baseColor, lineColor = ruleColor, modifier = Modifier.fillMaxSize())
 
-        Text(
-            text = formatTime(ownSeconds),
-            color = if (isActive) activeColor else inactiveColor,
-            fontFamily = ChessClockFonts.InstrumentSerif,
-            fontSize = 72.sp,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.align(Alignment.Center),
-        )
+        ) {
+            PawnIcon(fillColor = pawnColor, height = 40.dp)
+            Text(
+                text = formatTime(ownSeconds),
+                color = if (isActive) activeColor else inactiveColor,
+                fontFamily = ChessClockFonts.InstrumentSerif,
+                fontSize = 72.sp,
+            )
+        }
 
         OpponentBadge(
             seconds = opponentSeconds,
+            pawnColor = opponentCampColor,
             borderColor = badgeBorderColor,
-            dotColor = badgeDotColor,
             textColor = badgeTextColor,
             modifier = Modifier.align(Alignment.BottomEnd).padding(22.dp),
         )
@@ -171,8 +182,8 @@ private fun PlayerZone(
 @Composable
 private fun OpponentBadge(
     seconds: Int,
+    pawnColor: Color,
     borderColor: Color,
-    dotColor: Color,
     textColor: Color,
     modifier: Modifier = Modifier,
 ) {
@@ -181,9 +192,9 @@ private fun OpponentBadge(
             .border(width = 1.dp, color = borderColor)
             .padding(horizontal = 13.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(modifier = Modifier.size(11.dp).background(dotColor))
+        PawnIcon(fillColor = pawnColor, height = 18.dp)
         Text(
             text = formatTime(seconds),
             color = textColor,

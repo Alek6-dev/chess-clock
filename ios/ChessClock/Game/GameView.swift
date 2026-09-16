@@ -89,23 +89,31 @@ private struct PlayerZone: View {
     private var lineColor: Color { isBlack ? ChessClockColors.inkNight.opacity(0.16) : ChessClockColors.leather.opacity(0.07) }
     private var activeColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
     private var inactiveColor: Color { activeColor.opacity(0.6) }
+    // Couleur du pion = identité du camp (toujours la même), indépendante de la matière de
+    // la zone où il se trouve — contrairement à la couleur du chiffre, choisie pour la
+    // lisibilité sur sa propre zone.
+    private var campColor: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
+    private var opponentCampColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
+    private var pawnColor: Color { campColor.opacity(isActive ? 1 : 0.6) }
     private var badgeBorderColor: Color { isBlack ? ChessClockColors.ivory.opacity(0.28) : ChessClockColors.leather.opacity(0.45) }
-    private var badgeDotColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.lineRule }
     private var badgeTextColor: Color { isBlack ? ChessClockColors.ivory.opacity(0.8) : ChessClockColors.leather }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             RuledBackground(baseColor: baseColor, lineColor: lineColor)
 
-            Text(formatTime(ownSeconds))
-                .font(ChessClockFonts.instrumentSerif(72))
-                .foregroundColor(isActive ? activeColor : inactiveColor)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            HStack(spacing: 14) {
+                PawnIcon(fillColor: pawnColor, height: 40)
+                Text(formatTime(ownSeconds))
+                    .font(ChessClockFonts.instrumentSerif(72))
+                    .foregroundColor(isActive ? activeColor : inactiveColor)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             OpponentBadge(
                 seconds: opponentSeconds,
+                pawnColor: opponentCampColor,
                 borderColor: badgeBorderColor,
-                dotColor: badgeDotColor,
                 textColor: badgeTextColor
             )
             .padding(22)
@@ -135,13 +143,13 @@ private struct PlayerZone: View {
 
 private struct OpponentBadge: View {
     let seconds: Int
+    let pawnColor: Color
     let borderColor: Color
-    let dotColor: Color
     let textColor: Color
 
     var body: some View {
-        HStack(spacing: 10) {
-            Rectangle().fill(dotColor).frame(width: 11, height: 11)
+        HStack(spacing: 8) {
+            PawnIcon(fillColor: pawnColor, height: 18)
             Text(formatTime(seconds))
                 .font(ChessClockFonts.instrumentSerif(15))
                 .foregroundColor(textColor)
