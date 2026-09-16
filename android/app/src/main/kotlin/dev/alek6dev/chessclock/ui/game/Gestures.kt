@@ -42,10 +42,12 @@ private suspend fun PointerInputScope.detectTapOrHorizontalSwipe(
             val event = awaitPointerEvent()
             val change = event.changes.firstOrNull { it.id == down.id } ?: break
             if (change.changedToUp()) {
-                // Direction ignorée : les zones peuvent être affichées à 180°, seule la distance
-                // horizontale distingue un swipe volontaire d'un simple tap.
+                // Swipe gauche -> droite uniquement (issue #6). Les coordonnées du pointeur
+                // sont déjà dans le repère local de la zone (donc post-rotation pour les
+                // Noirs) : un totalDragX positif correspond bien à un geste gauche -> droite
+                // du point de vue du joueur qui lit cette moitié, dans les deux cas.
                 when {
-                    abs(totalDragX) > swipeThresholdPx -> onSwipeReset()
+                    totalDragX > swipeThresholdPx -> onSwipeReset()
                     abs(totalDragX) < tapTolerancePx -> onTap()
                 }
                 break

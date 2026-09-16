@@ -2,6 +2,7 @@ package dev.alek6dev.chessclock.ui.components
 
 import android.widget.NumberPicker
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 
@@ -16,6 +17,10 @@ fun WheelNumberPicker(
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Le factory de l'AndroidView ne se relance jamais : sans ça, le listener garde à vie
+    // la toute première closure onValueChange (et donc la toute première valeur "value"
+    // qu'elle avait capturée), ce qui écrase les autres champs à leur valeur de départ.
+    val currentOnValueChange = rememberUpdatedState(onValueChange)
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -24,7 +29,7 @@ fun WheelNumberPicker(
                 maxValue = range.last
                 setFormatter { it.toString().padStart(2, '0') }
                 this.value = value
-                setOnValueChangedListener { _, _, newValue -> onValueChange(newValue) }
+                setOnValueChangedListener { _, _, newValue -> currentOnValueChange.value(newValue) }
             }
         },
         update = { picker ->
