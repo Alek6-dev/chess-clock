@@ -161,10 +161,9 @@ private fun PlayerZone(
             modifier = Modifier.align(Alignment.Center),
         ) {
             PawnIcon(fillColor = pawnColor, height = 40.dp)
-            Text(
+            TabularTimeText(
                 text = formatTime(ownSeconds),
                 color = if (isActive) activeColor else inactiveColor,
-                fontFamily = ChessClockFonts.InstrumentSerif,
                 fontSize = 72.sp,
             )
         }
@@ -195,10 +194,9 @@ private fun OpponentBadge(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         PawnIcon(fillColor = pawnColor, height = 18.dp)
-        Text(
+        TabularTimeText(
             text = formatTime(seconds),
             color = textColor,
-            fontFamily = ChessClockFonts.InstrumentSerif,
             fontSize = 15.sp,
         )
     }

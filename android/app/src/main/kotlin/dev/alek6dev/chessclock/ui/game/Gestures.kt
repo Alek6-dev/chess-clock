@@ -2,7 +2,9 @@ package dev.alek6dev.chessclock.ui.game
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -21,18 +23,28 @@ private val TAP_TOLERANCE = 24.dp
  * dans son repère local déjà inversé par rapport à l'écran réel. Un geste "vers la droite de
  * l'écran" s'y traduit par un déplacement local négatif — sans ça, le swipe ne marcherait que
  * dans un sens sur une zone et dans l'autre sens sur l'autre.
+ *
+ * onTap/onSwipeReset ne sont PAS des clés de pointerInput : ce sont des lambdas recréées à
+ * chaque recomposition (le chrono tourne chaque seconde), donc les utiliser comme clé
+ * redémarrait la détection de geste en continu et pouvait couper un swipe en plein milieu.
+ * rememberUpdatedState permet de toujours appeler la version la plus récente sans jamais
+ * relancer la coroutine de détection.
  */
 fun Modifier.tapOrSwipeReset(isRotated: Boolean, onTap: () -> Unit, onSwipeReset: () -> Unit): Modifier =
-    this.pointerInput(isRotated, onTap, onSwipeReset) {
-        val swipeThresholdPx = SWIPE_RESET_THRESHOLD.toPx()
-        val tapTolerancePx = TAP_TOLERANCE.toPx()
-        detectTapOrHorizontalSwipe(
-            isRotated = isRotated,
-            swipeThresholdPx = swipeThresholdPx,
-            tapTolerancePx = tapTolerancePx,
-            onTap = onTap,
-            onSwipeReset = onSwipeReset,
-        )
+    composed {
+        val currentOnTap = rememberUpdatedState(onTap)
+        val currentOnSwipeReset = rememberUpdatedState(onSwipeReset)
+        this.pointerInput(isRotated) {
+            val swipeThresholdPx = SWIPE_RESET_THRESHOLD.toPx()
+            val tapTolerancePx = TAP_TOLERANCE.toPx()
+            detectTapOrHorizontalSwipe(
+                isRotated = isRotated,
+                swipeThresholdPx = swipeThresholdPx,
+                tapTolerancePx = tapTolerancePx,
+                onTap = { currentOnTap.value() },
+                onSwipeReset = { currentOnSwipeReset.value() },
+            )
+        }
     }
 
 private suspend fun PointerInputScope.detectTapOrHorizontalSwipe(

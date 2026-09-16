@@ -104,9 +104,7 @@ private struct PlayerZone: View {
 
             HStack(spacing: 14) {
                 PawnIcon(fillColor: pawnColor, height: 40)
-                Text(formatTime(ownSeconds))
-                    .font(ChessClockFonts.instrumentSerif(72))
-                    .foregroundColor(isActive ? activeColor : inactiveColor)
+                TabularTimeText(text: formatTime(ownSeconds), color: isActive ? activeColor : inactiveColor, fontSize: 72)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -150,9 +148,7 @@ private struct OpponentBadge: View {
     var body: some View {
         HStack(spacing: 8) {
             PawnIcon(fillColor: pawnColor, height: 18)
-            Text(formatTime(seconds))
-                .font(ChessClockFonts.instrumentSerif(15))
-                .foregroundColor(textColor)
+            TabularTimeText(text: formatTime(seconds), color: textColor, fontSize: 15)
         }
         .padding(.horizontal, 13)
         .padding(.vertical, 7)
