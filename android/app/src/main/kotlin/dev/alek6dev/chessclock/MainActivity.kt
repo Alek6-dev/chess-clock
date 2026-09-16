@@ -1,33 +1,49 @@
 package dev.alek6dev.chessclock
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import dev.alek6dev.chessclock.model.GameTime
+import dev.alek6dev.chessclock.ui.game.GameScreen
 import dev.alek6dev.chessclock.ui.setup.GameSetupScreen
+import dev.alek6dev.chessclock.ui.theme.ChessClockTheme
+
+private sealed interface Screen {
+    data object Setup : Screen
+    data class Playing(val whiteTime: GameTime, val blackTime: GameTime) : Screen
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
-                Surface {
-                    GameSetupScreen(
-                        onStartGame = { whiteTime, blackTime ->
-                            // Stub temporaire : le vrai lancement de partie
-                            // (écran des chronos) arrive avec l'issue #2.
-                            Toast.makeText(
-                                this,
-                                "Blancs ${whiteTime.minutes}:${whiteTime.seconds} — " +
-                                    "Noirs ${blackTime.minutes}:${blackTime.seconds}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        },
-                    )
-                }
+            ChessClockTheme {
+                ChessClockApp()
             }
         }
+    }
+}
+
+@Composable
+private fun ChessClockApp() {
+    var screen by remember { mutableStateOf<Screen>(Screen.Setup) }
+
+    when (val current = screen) {
+        is Screen.Setup -> GameSetupScreen(
+            onStartGame = { whiteTime, blackTime ->
+                screen = Screen.Playing(whiteTime, blackTime)
+            },
+        )
+
+        is Screen.Playing -> GameScreen(
+            whiteTime = current.whiteTime,
+            blackTime = current.blackTime,
+            onReset = { screen = Screen.Setup },
+        )
     }
 }

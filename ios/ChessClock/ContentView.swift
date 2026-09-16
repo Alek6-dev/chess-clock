@@ -1,30 +1,23 @@
 import SwiftUI
 
+private enum Screen {
+    case setup
+    case playing(white: GameTime, black: GameTime)
+}
+
 struct ContentView: View {
-    @State private var confirmationMessage: String?
+    @State private var screen: Screen = .setup
 
     var body: some View {
-        GameSetupView { whiteTime, blackTime in
-            // Stub temporaire : le vrai lancement de partie (écran des
-            // chronos) arrive avec l'issue #2.
-            confirmationMessage =
-                "Blancs \(whiteTime.minutes):\(whiteTime.seconds) — " +
-                "Noirs \(blackTime.minutes):\(blackTime.seconds)"
-        }
-        .alert(
-            "Partie configurée",
-            isPresented: Binding(
-                get: { confirmationMessage != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        confirmationMessage = nil
-                    }
-                }
-            )
-        ) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(confirmationMessage ?? "")
+        switch screen {
+        case .setup:
+            GameSetupView { whiteTime, blackTime in
+                screen = .playing(white: whiteTime, black: blackTime)
+            }
+        case .playing(let whiteTime, let blackTime):
+            GameView(whiteTime: whiteTime, blackTime: blackTime) {
+                screen = .setup
+            }
         }
     }
 }
