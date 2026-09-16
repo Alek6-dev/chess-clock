@@ -14,14 +14,20 @@ private val SWIPE_RESET_THRESHOLD = 80.dp
 private val TAP_TOLERANCE = 24.dp
 
 /**
- * Tap sur sa zone = passe la main. Swipe horizontal (distance minimale distincte d'un tap)
- * = reset direct (issue #6). Les deux gestes doivent rester clairement séparés.
+ * Tap sur sa zone = passe la main. Swipe du bouton pause vers l'autre bord (gauche -> droite
+ * à l'écran, distance minimale distincte d'un tap) = reset direct (issue #6).
+ *
+ * [isRotated] : la zone des Noirs est tournée à 180°, donc pointerInput reçoit des coordonnées
+ * dans son repère local déjà inversé par rapport à l'écran réel. Un geste "vers la droite de
+ * l'écran" s'y traduit par un déplacement local négatif — sans ça, le swipe ne marcherait que
+ * dans un sens sur une zone et dans l'autre sens sur l'autre.
  */
-fun Modifier.tapOrSwipeReset(onTap: () -> Unit, onSwipeReset: () -> Unit): Modifier =
-    this.pointerInput(onTap, onSwipeReset) {
+fun Modifier.tapOrSwipeReset(isRotated: Boolean, onTap: () -> Unit, onSwipeReset: () -> Unit): Modifier =
+    this.pointerInput(isRotated, onTap, onSwipeReset) {
         val swipeThresholdPx = SWIPE_RESET_THRESHOLD.toPx()
         val tapTolerancePx = TAP_TOLERANCE.toPx()
         detectTapOrHorizontalSwipe(
+            isRotated = isRotated,
             swipeThresholdPx = swipeThresholdPx,
             tapTolerancePx = tapTolerancePx,
             onTap = onTap,
@@ -30,6 +36,7 @@ fun Modifier.tapOrSwipeReset(onTap: () -> Unit, onSwipeReset: () -> Unit): Modif
     }
 
 private suspend fun PointerInputScope.detectTapOrHorizontalSwipe(
+    isRotated: Boolean,
     swipeThresholdPx: Float,
     tapTolerancePx: Float,
     onTap: () -> Unit,
@@ -42,12 +49,15 @@ private suspend fun PointerInputScope.detectTapOrHorizontalSwipe(
             val event = awaitPointerEvent()
             val change = event.changes.firstOrNull { it.id == down.id } ?: break
             if (change.changedToUp()) {
-                // Swipe gauche -> droite uniquement (issue #6). Les coordonnées du pointeur
-                // sont déjà dans le repère local de la zone (donc post-rotation pour les
-                // Noirs) : un totalDragX positif correspond bien à un geste gauche -> droite
-                // du point de vue du joueur qui lit cette moitié, dans les deux cas.
+                // Vers la droite à l'écran = positif en repère normal, négatif en repère
+                // tourné à 180°.
+                val swipedTowardOtherEdge = if (isRotated) {
+                    totalDragX < -swipeThresholdPx
+                } else {
+                    totalDragX > swipeThresholdPx
+                }
                 when {
-                    totalDragX > swipeThresholdPx -> onSwipeReset()
+                    swipedTowardOtherEdge -> onSwipeReset()
                     abs(totalDragX) < tapTolerancePx -> onTap()
                 }
                 break

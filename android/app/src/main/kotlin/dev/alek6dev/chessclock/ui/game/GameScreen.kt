@@ -146,7 +146,7 @@ private fun PlayerZone(
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { rotationZ = if (isRotated) 180f else 0f }
-            .tapOrSwipeReset(onTap = onTap, onSwipeReset = onSwipeReset),
+            .tapOrSwipeReset(isRotated = isRotated, onTap = onTap, onSwipeReset = onSwipeReset),
     ) {
         RuledBackground(baseColor = baseColor, lineColor = ruleColor, modifier = Modifier.fillMaxSize())
 

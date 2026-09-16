@@ -113,14 +113,17 @@ private struct PlayerZone: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .rotationEffect(.degrees(isRotated ? 180 : 0))
         .contentShape(Rectangle())
-        // Tap sur sa zone = passe la main. Swipe gauche -> droite uniquement (issue #6) =
-        // reset direct. La translation est déjà dans le repère local de la zone (donc
-        // post-rotation pour les Noirs) : une translation positive correspond bien à un
-        // geste gauche -> droite du point de vue du joueur qui lit cette moitié.
+        // Tap sur sa zone = passe la main. Swipe du bouton pause vers l'autre bord (gauche ->
+        // droite à l'écran) = reset direct (issue #6). La zone des Noirs étant tournée à
+        // 180°, sa translation est dans un repère local déjà inversé : "vers la droite de
+        // l'écran" y correspond à une translation négative.
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onEnded { value in
-                    if value.translation.width > 80 {
+                    let swipedTowardOtherEdge = isRotated
+                        ? value.translation.width < -80
+                        : value.translation.width > 80
+                    if swipedTowardOtherEdge {
                         onSwipeReset()
                     } else if abs(value.translation.width) < 24 {
                         onTap()
