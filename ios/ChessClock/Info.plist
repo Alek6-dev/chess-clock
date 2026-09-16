@@ -26,5 +26,13 @@
     <array>
         <string>UIInterfaceOrientationPortrait</string>
     </array>
+    <key>UIAppFonts</key>
+    <array>
+        <string>InstrumentSerif-Regular.ttf</string>
+        <string>EBGaramond-Regular.ttf</string>
+        <string>EBGaramond-Medium.ttf</string>
+        <string>EBGaramond-SemiBold.ttf</string>
+        <string>EBGaramond-Italic.ttf</string>
+    </array>
 </dict>
 </plist>
