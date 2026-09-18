@@ -85,36 +85,33 @@ private struct PlayerZone: View {
     let onSwipeReset: () -> Void
 
     private var isBlack: Bool { player == .black }
-    private var baseColor: Color { isBlack ? ChessClockColors.leather : ChessClockColors.paper }
-    private var lineColor: Color { isBlack ? ChessClockColors.inkNight.opacity(0.16) : ChessClockColors.leather.opacity(0.07) }
+    // Le fond de zone EST la couleur du camp (maquettes officielles) : plus de matière
+    // cuir/papier séparée. Le pion de son propre camp s'y fond donc entièrement — seul son
+    // contour (ton opposé) le rend visible.
+    private var baseColor: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
+    private var lineColor: Color { isBlack ? ChessClockColors.ivory.opacity(0.03) : ChessClockColors.leather.opacity(0.05) }
     private var activeColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
     private var inactiveColor: Color { activeColor.opacity(0.6) }
-    // Couleur du pion = identité du camp (toujours la même), indépendante de la matière de
-    // la zone où il se trouve — contrairement à la couleur du chiffre, choisie pour la
-    // lisibilité sur sa propre zone.
     private var campColor: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
+    private var campContour: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
     private var opponentCampColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
+    private var opponentCampContour: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
     private var pawnColor: Color { campColor.opacity(isActive ? 1 : 0.6) }
-    private var badgeBorderColor: Color { isBlack ? ChessClockColors.ivory.opacity(0.28) : ChessClockColors.leather.opacity(0.45) }
-    private var badgeTextColor: Color { isBlack ? ChessClockColors.ivory.opacity(0.8) : ChessClockColors.leather }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             RuledBackground(baseColor: baseColor, lineColor: lineColor)
 
-            HStack(spacing: 14) {
-                PawnIcon(fillColor: pawnColor, height: 40)
+            // Pion au-dessus, chrono en dessous — authoré identique pour les deux zones : la
+            // rotation de la zone du haut se charge de l'inverser visuellement à l'écran.
+            VStack(spacing: 8) {
+                PawnIcon(fillColor: pawnColor, contourColor: campContour, height: 40)
                 TabularTimeText(text: formatTime(ownSeconds), color: isActive ? activeColor : inactiveColor, fontSize: 72)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            OpponentBadge(
-                seconds: opponentSeconds,
-                pawnColor: opponentCampColor,
-                borderColor: badgeBorderColor,
-                textColor: badgeTextColor
-            )
-            .padding(22)
+            OpponentBadge(seconds: opponentSeconds, pawnColor: opponentCampColor, pawnContour: opponentCampContour, textColor: activeColor)
+                .padding(22)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .rotationEffect(.degrees(isRotated ? 180 : 0))
@@ -142,17 +139,14 @@ private struct PlayerZone: View {
 private struct OpponentBadge: View {
     let seconds: Int
     let pawnColor: Color
-    let borderColor: Color
+    let pawnContour: Color
     let textColor: Color
 
     var body: some View {
         HStack(spacing: 8) {
-            PawnIcon(fillColor: pawnColor, height: 18)
+            PawnIcon(fillColor: pawnColor, contourColor: pawnContour, height: 18)
             TabularTimeText(text: formatTime(seconds), color: textColor, fontSize: 15)
         }
-        .padding(.horizontal, 13)
-        .padding(.vertical, 7)
-        .overlay(Rectangle().stroke(borderColor, lineWidth: 1))
     }
 }
 
@@ -181,37 +175,49 @@ private struct GameOverHalf: View {
     let isRotated: Bool
     let onRematch: () -> Void
 
-    private var campLabel: String { player == .black ? "NOIR" : "BLANC" }
+    private var isBlack: Bool { player == .black }
 
     var body: some View {
         ZStack {
             if isLoser {
                 ChessClockColors.lacquerRed
             } else {
-                RuledBackground(baseColor: ChessClockColors.paper, lineColor: ChessClockColors.leather.opacity(0.07))
-                InkStainOverlay()
+                RuledBackground(
+                    baseColor: isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory,
+                    lineColor: isBlack ? ChessClockColors.ivory.opacity(0.03) : ChessClockColors.leather.opacity(0.05)
+                )
             }
 
             VStack(spacing: 0) {
-                Text(formatTime(seconds))
-                    .font(ChessClockFonts.instrumentSerif(72))
-                    .foregroundColor(isLoser ? ChessClockColors.ivory : ChessClockColors.inkSurface)
-
                 if isLoser {
-                    Text("TEMPS ÉCOULÉ — \(campLabel)")
-                        .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
-                        .tracking(2)
-                        .foregroundColor(ChessClockColors.textOnLacquer)
+                    // Fond de laque rouge : toujours un pion ivoire, quel que soit le camp battu.
+                    PawnIcon(fillColor: ChessClockColors.ivory, contourColor: ChessClockColors.lacquerRed, height: 40)
+                    Text("DÉFAITE")
+                        .font(ChessClockFonts.instrumentSerif(40))
+                        .foregroundColor(ChessClockColors.ivory)
                         .padding(.top, 18)
+                    Text("Temps écoulé")
+                        .font(ChessClockFonts.ebGaramond(15))
+                        .foregroundColor(ChessClockColors.textOnLacquer)
+                        .padding(.top, 4)
                 } else {
+                    let pawnColor = isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory
+                    let pawnContour = isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface
+                    PawnIcon(fillColor: pawnColor, contourColor: pawnContour, height: 40)
+                    TabularTimeText(
+                        text: formatTime(seconds),
+                        color: isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface,
+                        fontSize: 72
+                    )
+                    .padding(.top, 8)
                     Button(action: onRematch) {
                         Text("REJOUER")
                             .font(ChessClockFonts.ebGaramond(14, weight: .semiBold))
                             .tracking(2)
-                            .foregroundColor(ChessClockColors.inkNight)
+                            .foregroundColor(isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory)
                             .padding(.horizontal, 52)
                             .padding(.vertical, 20)
-                            .background(ChessClockColors.brass)
+                            .background(isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface)
                     }
                     .padding(.top, 40)
                 }

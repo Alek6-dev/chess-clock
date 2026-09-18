@@ -12,25 +12,28 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Réglure horizontale — seule texture de la planche v1.2 : filets fins réguliers,
- * déclinés plus sombres sur les zones de jeu (cuir) et dans leur ton d'origine sur le papier.
+ * Réglure horizontale — seule texture des maquettes officielles : filets fins réguliers,
+ * espacement et épaisseur identiques sur tous les écrans (0.5 pt / 5 pt), seule la couleur
+ * et l'opacité des filets changent d'un écran à l'autre.
  */
 @Composable
 fun RuledBackground(
     baseColor: Color,
     lineColor: Color,
-    spacing: Dp = 4.dp,
+    spacing: Dp = 5.dp,
+    lineThickness: Dp = 0.5.dp,
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.fillMaxSize().background(baseColor)) {
         val step = spacing.toPx()
+        val thickness = lineThickness.toPx()
         var y = 0f
         while (y < size.height) {
             drawLine(
                 color = lineColor,
                 start = Offset(0f, y),
                 end = Offset(size.width, y),
-                strokeWidth = 1f,
+                strokeWidth = thickness,
             )
             y += step
         }

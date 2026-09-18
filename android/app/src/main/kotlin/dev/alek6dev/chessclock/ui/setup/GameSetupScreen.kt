@@ -23,8 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,7 +31,6 @@ import dev.alek6dev.chessclock.model.GameTime
 import dev.alek6dev.chessclock.ui.components.WheelNumberPicker
 import dev.alek6dev.chessclock.ui.theme.ChessClockColors
 import dev.alek6dev.chessclock.ui.theme.ChessClockFonts
-import dev.alek6dev.chessclock.ui.theme.InkStainOverlay
 import dev.alek6dev.chessclock.ui.theme.RuledBackground
 
 private val DEFAULT_TIME = GameTime(minutes = 5, seconds = 0)
@@ -67,10 +64,9 @@ fun GameSetupScreen(
     Box(modifier = modifier.fillMaxSize()) {
         RuledBackground(
             baseColor = ChessClockColors.Paper,
-            lineColor = ChessClockColors.Leather.copy(alpha = 0.07f),
+            lineColor = ChessClockColors.LineRule.copy(alpha = 0.09f),
             modifier = Modifier.fillMaxSize(),
         )
-        InkStainOverlay(modifier = Modifier.fillMaxSize())
 
         Column(
             modifier = Modifier
@@ -227,35 +223,28 @@ private fun TimeWheelRow(
 
 @Composable
 private fun StartButton(enabled: Boolean, onClick: () -> Unit) {
-    val brassGradient = Brush.linearGradient(
-        colors = listOf(
-            ChessClockColors.Brass.copy(alpha = 0.7f),
-            ChessClockColors.Ivory.copy(alpha = 0.4f),
-            ChessClockColors.Brass,
-        ),
-    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .then(
                 if (enabled) {
                     Modifier
-                        .background(brassGradient)
+                        .background(ChessClockColors.InkSurface)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = onClick,
                         )
                 } else {
-                    Modifier.border(width = 1.dp, color = ChessClockColors.Leather.copy(alpha = 0.45f))
+                    Modifier.border(width = 1.dp, color = ChessClockColors.InkSurface)
                 },
             )
             .padding(vertical = 22.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "DÉMARRER",
-            color = if (enabled) ChessClockColors.InkNight else ChessClockColors.Leather.copy(alpha = 0.55f),
+            text = if (enabled) "COMMENCER" else "TEMPS NON VALIDE",
+            color = if (enabled) ChessClockColors.Paper else ChessClockColors.InkSurface,
             fontFamily = ChessClockFonts.EBGaramond,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,

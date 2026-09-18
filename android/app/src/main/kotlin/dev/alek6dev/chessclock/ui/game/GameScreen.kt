@@ -1,12 +1,12 @@
 package dev.alek6dev.chessclock.ui.game
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +32,6 @@ import dev.alek6dev.chessclock.model.GameTime
 import dev.alek6dev.chessclock.model.Player
 import dev.alek6dev.chessclock.ui.theme.ChessClockColors
 import dev.alek6dev.chessclock.ui.theme.ChessClockFonts
-import dev.alek6dev.chessclock.ui.theme.InkStainOverlay
 import dev.alek6dev.chessclock.ui.theme.LocalHaptics
 import dev.alek6dev.chessclock.ui.theme.RuledBackground
 import kotlinx.coroutines.delay
@@ -134,18 +133,18 @@ private fun PlayerZone(
     onSwipeReset: () -> Unit,
 ) {
     val isBlack = player == Player.BLACK
-    val baseColor = if (isBlack) ChessClockColors.Leather else ChessClockColors.Paper
-    val ruleColor = if (isBlack) Color(0x2917110D) else Color(0x126B5236)
+    // Le fond de zone EST la couleur du camp (maquettes officielles) : plus de matière
+    // cuir/papier séparée. Le pion de son propre camp s'y fond donc entièrement — seul son
+    // contour (ton opposé) le rend visible.
+    val baseColor = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
+    val ruleColor = if (isBlack) Color(0x08F0E6D2) else Color(0x0D6B5236)
     val activeColor = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
     val inactiveColor = activeColor.copy(alpha = 0.6f)
-    // Couleur du pion = identité du camp (toujours la même), indépendante de la matière de
-    // la zone où il se trouve — contrairement à la couleur du chiffre, choisie pour la
-    // lisibilité sur sa propre zone.
     val campColor = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
+    val campContour = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
     val opponentCampColor = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
+    val opponentCampContour = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
     val pawnColor = campColor.copy(alpha = if (isActive) 1f else 0.6f)
-    val badgeBorderColor = if (isBlack) ChessClockColors.Ivory.copy(alpha = 0.28f) else ChessClockColors.Leather.copy(alpha = 0.45f)
-    val badgeTextColor = if (isBlack) ChessClockColors.Ivory.copy(alpha = 0.8f) else ChessClockColors.Leather
 
     Box(
         modifier = modifier
@@ -155,12 +154,14 @@ private fun PlayerZone(
     ) {
         RuledBackground(baseColor = baseColor, lineColor = ruleColor, modifier = Modifier.fillMaxSize())
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        // Pion au-dessus, chrono en dessous — authoré identique pour les deux zones : la
+        // rotation de la zone du haut se charge de l'inverser visuellement à l'écran.
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.align(Alignment.Center),
         ) {
-            PawnIcon(fillColor = pawnColor, height = 40.dp)
+            PawnIcon(fillColor = pawnColor, contourColor = campContour, height = 40.dp)
+            Spacer(Modifier.height(8.dp))
             TabularTimeText(
                 text = formatTime(ownSeconds),
                 color = if (isActive) activeColor else inactiveColor,
@@ -171,8 +172,8 @@ private fun PlayerZone(
         OpponentBadge(
             seconds = opponentSeconds,
             pawnColor = opponentCampColor,
-            borderColor = badgeBorderColor,
-            textColor = badgeTextColor,
+            pawnContour = opponentCampContour,
+            textColor = activeColor,
             modifier = Modifier.align(Alignment.BottomEnd).padding(22.dp),
         )
     }
@@ -182,18 +183,16 @@ private fun PlayerZone(
 private fun OpponentBadge(
     seconds: Int,
     pawnColor: Color,
-    borderColor: Color,
+    pawnContour: Color,
     textColor: Color,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .border(width = 1.dp, color = borderColor)
-            .padding(horizontal = 13.dp, vertical = 7.dp),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PawnIcon(fillColor = pawnColor, height = 18.dp)
+        PawnIcon(fillColor = pawnColor, contourColor = pawnContour, height = 18.dp)
         TabularTimeText(
             text = formatTime(seconds),
             color = textColor,
@@ -235,7 +234,7 @@ private fun GameOverHalf(
     onRematch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val campLabel = if (player == Player.BLACK) "NOIR" else "BLANC"
+    val isBlack = player == Player.BLACK
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -243,38 +242,45 @@ private fun GameOverHalf(
             .then(if (isLoser) Modifier.background(ChessClockColors.LacquerRed) else Modifier),
     ) {
         if (!isLoser) {
-            RuledBackground(
-                baseColor = ChessClockColors.Paper,
-                lineColor = ChessClockColors.Leather.copy(alpha = 0.07f),
-                modifier = Modifier.fillMaxSize(),
-            )
-            InkStainOverlay(modifier = Modifier.fillMaxSize())
+            val baseColor = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
+            val ruleColor = if (isBlack) Color(0x08F0E6D2) else Color(0x0D6B5236)
+            RuledBackground(baseColor = baseColor, lineColor = ruleColor, modifier = Modifier.fillMaxSize())
         }
 
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = formatTime(seconds),
-                color = if (isLoser) ChessClockColors.Ivory else ChessClockColors.InkSurface,
-                fontFamily = ChessClockFonts.InstrumentSerif,
-                fontSize = 72.sp,
-            )
             if (isLoser) {
+                // Fond de laque rouge : toujours un pion ivoire, quel que soit le camp battu.
+                PawnIcon(fillColor = ChessClockColors.Ivory, contourColor = ChessClockColors.LacquerRed, height = 40.dp)
                 Text(
-                    text = "TEMPS ÉCOULÉ — $campLabel",
-                    color = ChessClockColors.TextOnLacquer,
-                    fontFamily = ChessClockFonts.EBGaramond,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    letterSpacing = 2.sp,
+                    text = "DÉFAITE",
+                    color = ChessClockColors.Ivory,
+                    fontFamily = ChessClockFonts.InstrumentSerif,
+                    fontSize = 40.sp,
                     modifier = Modifier.padding(top = 18.dp),
                 )
+                Text(
+                    text = "Temps écoulé",
+                    color = ChessClockColors.TextOnLacquer,
+                    fontFamily = ChessClockFonts.EBGaramond,
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             } else {
+                val pawnColor = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
+                val pawnContour = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
+                PawnIcon(fillColor = pawnColor, contourColor = pawnContour, height = 40.dp)
+                TabularTimeText(
+                    text = formatTime(seconds),
+                    color = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface,
+                    fontSize = 72.sp,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
                 Text(
                     text = "REJOUER",
-                    color = ChessClockColors.InkNight,
+                    color = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory,
                     fontFamily = ChessClockFonts.EBGaramond,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
@@ -282,7 +288,7 @@ private fun GameOverHalf(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .padding(top = 40.dp)
-                        .background(ChessClockColors.Brass)
+                        .background(if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,

@@ -13,9 +13,7 @@ struct GameSetupView: View {
 
     var body: some View {
         ZStack {
-            RuledBackground(baseColor: ChessClockColors.paper, lineColor: ChessClockColors.leather.opacity(0.07))
-                .ignoresSafeArea()
-            InkStainOverlay()
+            RuledBackground(baseColor: ChessClockColors.paper, lineColor: ChessClockColors.lineRule.opacity(0.09))
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
@@ -160,33 +158,17 @@ private struct StartButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text("DÉMARRER")
+            Text(enabled ? "COMMENCER" : "TEMPS NON VALIDE")
                 .font(ChessClockFonts.ebGaramond(14, weight: .semiBold))
                 .tracking(2)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 22)
-                .foregroundColor(enabled ? ChessClockColors.inkNight : ChessClockColors.leather.opacity(0.55))
-                .background(
-                    Group {
-                        if enabled {
-                            LinearGradient(
-                                colors: [
-                                    ChessClockColors.brass.opacity(0.7),
-                                    ChessClockColors.ivory.opacity(0.4),
-                                    ChessClockColors.brass,
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        } else {
-                            Color.clear
-                        }
-                    }
-                )
+                .foregroundColor(enabled ? ChessClockColors.paper : ChessClockColors.inkSurface)
+                .background(enabled ? ChessClockColors.inkSurface : Color.clear)
                 .overlay(
                     Group {
                         if !enabled {
-                            Rectangle().stroke(ChessClockColors.leather.opacity(0.45), lineWidth: 1)
+                            Rectangle().stroke(ChessClockColors.inkSurface, lineWidth: 1)
                         }
                     }
                 )

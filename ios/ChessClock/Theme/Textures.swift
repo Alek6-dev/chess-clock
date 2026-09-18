@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// Réglure horizontale — seule texture de la planche v1.2 : filets fins réguliers,
-/// déclinés plus sombres sur les zones de jeu (cuir) et dans leur ton d'origine sur le papier.
+/// Réglure horizontale — seule texture des maquettes officielles : filets fins réguliers,
+/// espacement et épaisseur identiques sur tous les écrans (0.5 pt / 5 pt), seule la couleur
+/// et l'opacité des filets changent d'un écran à l'autre.
 struct RuledBackground: View {
     var baseColor: Color
     var lineColor: Color
-    var spacing: CGFloat = 4
+    var spacing: CGFloat = 5
+    var lineThickness: CGFloat = 0.5
 
     var body: some View {
         Canvas { context, size in
@@ -14,7 +16,7 @@ struct RuledBackground: View {
                 var path = Path()
                 path.move(to: CGPoint(x: 0, y: y))
                 path.addLine(to: CGPoint(x: size.width, y: y))
-                context.stroke(path, with: .color(lineColor), lineWidth: 1)
+                context.stroke(path, with: .color(lineColor), lineWidth: lineThickness)
                 y += spacing
             }
         }
