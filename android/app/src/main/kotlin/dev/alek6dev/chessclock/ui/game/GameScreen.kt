@@ -1,6 +1,10 @@
 package dev.alek6dev.chessclock.ui.game
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,12 +22,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,12 +58,16 @@ fun GameScreen(
 ) {
     val haptics = LocalHaptics.current
     val state = remember(whiteTime, blackTime) { GameClockState(whiteTime, blackTime) }
+    var isPaused by remember { mutableStateOf(false) }
 
-    // Un seul chrono décompte à la fois ; la boucle repart à chaque changement de main.
-    LaunchedEffect(state.activePlayer, state.isOver) {
-        while (!state.isOver) {
-            delay(1000)
-            state.tick()
+    // Un seul chrono décompte à la fois ; la boucle repart à chaque changement de main, et se
+    // coupe entièrement pendant la pause (aucun tick n'est consommé pendant ce temps).
+    LaunchedEffect(state.activePlayer, state.isOver, isPaused) {
+        if (!isPaused) {
+            while (!state.isOver) {
+                delay(1000)
+                state.tick()
+            }
         }
     }
 
@@ -83,7 +95,7 @@ fun GameScreen(
                     isRotated = true,
                     modifier = Modifier.weight(1f),
                     onTap = { state.pass(Player.BLACK); haptics.light() },
-                    onSwipeReset = onReset,
+                    onSwipeReset = { isPaused = true },
                 )
             }
 
@@ -105,14 +117,20 @@ fun GameScreen(
                     isRotated = false,
                     modifier = Modifier.weight(1f),
                     onTap = { state.pass(Player.WHITE); haptics.light() },
-                    onSwipeReset = onReset,
+                    onSwipeReset = { isPaused = true },
                 )
             }
         }
 
         if (!state.isOver) {
-            PauseButton(onTap = onReset, modifier = Modifier.align(Alignment.CenterStart))
+            PauseButton(onTap = { isPaused = true }, modifier = Modifier.align(Alignment.CenterStart))
         }
+
+        PauseOverlay(
+            isPaused = isPaused && !state.isOver,
+            onResume = { isPaused = false },
+            onConfigure = onReset,
+        )
     }
 }
 
@@ -296,6 +314,100 @@ private fun GameOverHalf(
                             onClick = onRematch,
                         )
                         .padding(horizontal = 52.dp, vertical = 20.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Modale de pause (issue #6) : déclenchée par swipe ou par le bouton pause, comportement
+ * identique dans les deux cas. Transition d'entrée "tirée" depuis la gauche vers la droite.
+ */
+@Composable
+private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: () -> Unit) {
+    if (!isPaused) return
+
+    val progress = remember(isPaused) { Animatable(0f) }
+    LaunchedEffect(isPaused) {
+        progress.animateTo(1f, animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing))
+    }
+    val density = LocalDensity.current
+    val slidePx = with(density) { 420.dp.toPx() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ChessClockColors.InkNight.copy(alpha = 0.55f * progress.value))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {}, // capte les taps derrière la modale, ne fait rien
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 30.dp)
+                .graphicsLayer { translationX = (progress.value - 1f) * slidePx }
+                .background(ChessClockColors.Paper)
+                .padding(32.dp),
+        ) {
+            Text(
+                text = "Pause",
+                color = ChessClockColors.InkSurface,
+                fontFamily = ChessClockFonts.InstrumentSerif,
+                fontSize = 34.sp,
+            )
+            Spacer(Modifier.height(16.dp))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(ChessClockColors.LineRule))
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = "Votre partie est en pause, les deux chronomètres sont arrêtés.",
+                color = ChessClockColors.InkSurface,
+                fontFamily = ChessClockFonts.EBGaramond,
+                fontSize = 16.sp,
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "Souhaitez-vous reprendre votre partie en cours ou en configurer une nouvelle ?",
+                color = ChessClockColors.InkSurface,
+                fontFamily = ChessClockFonts.EBGaramond,
+                fontSize = 16.sp,
+            )
+            Spacer(Modifier.height(28.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    text = "REPRENDRE",
+                    color = ChessClockColors.Paper,
+                    fontFamily = ChessClockFonts.EBGaramond,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier
+                        .background(ChessClockColors.InkSurface)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onResume,
+                        )
+                        .padding(horizontal = 22.dp, vertical = 16.dp),
+                )
+                Text(
+                    text = "CONFIGURER",
+                    color = ChessClockColors.InkSurface,
+                    fontFamily = ChessClockFonts.EBGaramond,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier
+                        .border(width = 1.dp, color = ChessClockColors.InkSurface)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onConfigure,
+                        )
+                        .padding(horizontal = 22.dp, vertical = 16.dp),
                 )
             }
         }
