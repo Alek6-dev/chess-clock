@@ -110,26 +110,61 @@ private enum CampSwatch { case white, black }
 /// derrière la valeur centrale. Contrairement à un NumberPicker Android, chaque ligne est ici
 /// un Text que l'on fournit nous-même : on peut donc colorer la valeur sélectionnée
 /// différemment de ses voisines sans widget custom.
+///
+/// Picker(.wheel) n'a pas de mode "boucle infinie" natif : le cycle 0..59 est donc répété de
+/// nombreuses fois (`virtualCount`), avec un point de départ calé au milieu de la plage
+/// virtuelle, pour donner une sensation de défilement infini dans les deux sens (59 -> 0 et
+/// 0 -> 59) sans butée.
 private struct HighlightedWheel: View {
     @Binding var selection: Int
     let boxColor: Color
     let selectedTextColor: Color
+
+    private let span = 60
+    private let virtualCount = 60 * 2000
+
+    @State private var virtualSelection: Int
+
+    init(selection: Binding<Int>, boxColor: Color, selectedTextColor: Color) {
+        self._selection = selection
+        self.boxColor = boxColor
+        self.selectedTextColor = selectedTextColor
+        let span = 60
+        let virtualCount = span * 2000
+        let middleCycleStart = (virtualCount / 2 / span) * span
+        self._virtualSelection = State(initialValue: middleCycleStart + selection.wrappedValue)
+    }
 
     var body: some View {
         ZStack {
             Rectangle()
                 .fill(boxColor)
                 .frame(width: 64, height: 52)
-            Picker("", selection: $selection) {
-                ForEach(0..<60) { value in
-                    Text(String(format: "%02d", value))
-                        .font(ChessClockFonts.instrumentSerif(value == selection ? 34 : 24))
-                        .foregroundColor(value == selection ? selectedTextColor : ChessClockColors.inkSurface)
-                        .tag(value)
+            Picker("", selection: $virtualSelection) {
+                ForEach(0..<virtualCount, id: \.self) { index in
+                    Text(String(format: "%02d", index % span))
+                        .font(ChessClockFonts.instrumentSerif(index == virtualSelection ? 34 : 24))
+                        .foregroundColor(index == virtualSelection ? selectedTextColor : ChessClockColors.inkSurface)
+                        .tag(index)
                 }
             }
             .pickerStyle(.wheel)
             .frame(width: 90)
+            .onChange(of: virtualSelection) { newIndex in
+                let actual = newIndex % span
+                if actual != selection {
+                    selection = actual
+                }
+            }
+            .onChange(of: selection) { newValue in
+                let currentActual = virtualSelection % span
+                if currentActual != newValue {
+                    var delta = newValue - currentActual
+                    if delta > span / 2 { delta -= span }
+                    if delta < -span / 2 { delta += span }
+                    virtualSelection += delta
+                }
+            }
         }
     }
 }

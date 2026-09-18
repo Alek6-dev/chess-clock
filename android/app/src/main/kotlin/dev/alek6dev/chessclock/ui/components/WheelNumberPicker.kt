@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,11 +28,17 @@ import kotlin.math.roundToInt
 
 private val ITEM_HEIGHT = 50.dp
 
+// Le cycle 0..59 est répété de nombreuses fois pour donner une sensation de défilement infini
+// dans les deux sens (59 -> 0 et 0 -> 59), le point de départ étant calé au milieu de la plage
+// virtuelle pour laisser de la marge des deux côtés.
+private const val CYCLE_REPEAT_COUNT = 2000
+
 /**
  * Roue à défilement/snap, mesurée sur les maquettes officielles : la valeur sélectionnée a
  * son propre encart plein derrière elle et sa propre couleur de texte (34pt) — un
  * NumberPicker natif ne peut pas donner deux couleurs de texte différentes dans une même
- * roue (valeur sélectionnée vs voisines), d'où ce composant en Compose pur.
+ * roue (valeur sélectionnée vs voisines), d'où ce composant en Compose pur. Le défilement est
+ * infini (boucle sur `range`) pour permettre de passer de 59 à 0 et inversement sans butée.
  */
 @Composable
 fun WheelNumberPicker(
@@ -44,16 +49,23 @@ fun WheelNumberPicker(
     selectedTextColor: Color = ChessClockColors.Ivory,
     modifier: Modifier = Modifier,
 ) {
-    val values = remember(range) { range.toList() }
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (value - range.first).coerceIn(0, values.lastIndex))
+    val span = remember(range) { range.count() }
+    val virtualCount = remember(span) { span * CYCLE_REPEAT_COUNT }
+    val startIndex = remember(range) {
+        val middleCycleStart = (virtualCount / 2 / span) * span
+        middleCycleStart + (value - range.first)
+    }
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
     val flingBehavior = rememberSnapFlingBehavior(listState)
     val density = LocalDensity.current
     val itemHeightPx = with(density) { ITEM_HEIGHT.toPx() }
 
+    fun valueAt(index: Int) = range.first + (((index % span) + span) % span)
+
     val centerIndex by remember {
         derivedStateOf {
             val offsetFraction = listState.firstVisibleItemScrollOffset / itemHeightPx
-            (listState.firstVisibleItemIndex + offsetFraction.roundToInt()).coerceIn(0, values.lastIndex)
+            (listState.firstVisibleItemIndex + offsetFraction.roundToInt()).coerceIn(0, virtualCount - 1)
         }
     }
 
@@ -61,17 +73,23 @@ fun WheelNumberPicker(
     // parent qu'au repos, jamais pendant le défilement.
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
-            val settled = values.getOrNull(centerIndex) ?: return@LaunchedEffect
+            val settled = valueAt(centerIndex)
             if (settled != value) onValueChange(settled)
         }
     }
 
     // Synchronise un changement externe (ex. recocher "temps identique") sans court-circuiter
-    // un défilement en cours de l'utilisateur.
+    // un défilement en cours de l'utilisateur ; rejoint la valeur cible par le chemin le plus
+    // court sur la roue plutôt que de revenir systématiquement vers le premier cycle.
     LaunchedEffect(value) {
         if (!listState.isScrollInProgress) {
-            val idx = (value - range.first).coerceIn(0, values.lastIndex)
-            if (idx != centerIndex) listState.scrollToItem(idx)
+            val currentValue = valueAt(centerIndex)
+            if (currentValue != value) {
+                var delta = value - currentValue
+                if (delta > span / 2) delta -= span
+                if (delta < -span / 2) delta += span
+                listState.scrollToItem(centerIndex + delta)
+            }
         }
     }
 
@@ -88,11 +106,11 @@ fun WheelNumberPicker(
             contentPadding = PaddingValues(vertical = ITEM_HEIGHT),
             modifier = Modifier.fillMaxSize(),
         ) {
-            itemsIndexed(values) { index, v ->
+            items(virtualCount) { index ->
                 val isSelected = index == centerIndex
                 Box(modifier = Modifier.fillMaxWidth().height(ITEM_HEIGHT), contentAlignment = Alignment.Center) {
                     Text(
-                        text = v.toString().padStart(2, '0'),
+                        text = valueAt(index).toString().padStart(2, '0'),
                         color = if (isSelected) selectedTextColor else ChessClockColors.InkSurface,
                         fontFamily = ChessClockFonts.InstrumentSerif,
                         fontSize = if (isSelected) 34.sp else 24.sp,
