@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// Écran de jeu — issues #2 (démarrer), #3 (passer la main), #4 (affichage temps réel),
 /// #5 (fin de partie) et #6 (reset direct par swipe ou bouton pause, sans confirmation).
@@ -33,8 +32,7 @@ struct GameView: View {
                         opponentSeconds: state.whiteSeconds,
                         isActive: state.activePlayer == .black,
                         isRotated: true,
-                        onTap: { state.pass(.black); Haptics.light() },
-                        onSwipeReset: { state.pause() }
+                        onTap: { state.pass(.black); Haptics.light() }
                     )
                 }
 
@@ -54,8 +52,7 @@ struct GameView: View {
                         opponentSeconds: state.blackSeconds,
                         isActive: state.activePlayer == .white,
                         isRotated: false,
-                        onTap: { state.pass(.white); Haptics.light() },
-                        onSwipeReset: { state.pause() }
+                        onTap: { state.pass(.white); Haptics.light() }
                     )
                 }
             }
@@ -115,29 +112,31 @@ private struct PauseOverlay: View {
                     HStack(spacing: 14) {
                         Text("REPRENDRE")
                             .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
-                            .tracking(1.5)
+                            .tracking(1)
+                            .lineLimit(1)
                             .multilineTextAlignment(.center)
                             .foregroundColor(ChessClockColors.paper)
                             .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 16)
                             .background(ChessClockColors.inkSurface)
                             .onTapGesture(perform: onResume)
                         Text("CONFIGURER")
                             .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
-                            .tracking(1.5)
+                            .tracking(1)
+                            .lineLimit(1)
                             .multilineTextAlignment(.center)
                             .foregroundColor(ChessClockColors.inkSurface)
                             .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 16)
                             .overlay(Rectangle().stroke(ChessClockColors.inkSurface, lineWidth: 1))
                             .onTapGesture(perform: onConfigure)
                     }
                 }
-                .padding(32)
+                .padding(24)
                 .background(ChessClockColors.paper)
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 24)
                 .offset(x: (progress - 1) * 420)
             }
             .onAppear {
@@ -163,7 +162,6 @@ private struct PlayerZone: View {
     let isActive: Bool
     let isRotated: Bool
     let onTap: () -> Void
-    let onSwipeReset: () -> Void
 
     private var isBlack: Bool { player == .black }
     // Le fond de zone EST la couleur du camp (maquettes officielles) : plus de matière
@@ -197,28 +195,7 @@ private struct PlayerZone: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .rotationEffect(.degrees(isRotated ? 180 : 0))
         .contentShape(Rectangle())
-        // Tap sur sa zone = passe la main. Swipe du bouton pause vers l'autre bord (gauche ->
-        // droite à l'écran), démarré près de la vague, = pause (issue #6). La zone des Noirs
-        // étant tournée à 180°, sa translation est dans un repère local déjà inversé : "vers
-        // la droite de l'écran" y correspond à une translation négative, et "près de la
-        // vague" (bord gauche à l'écran) correspond au bord DROIT du repère local.
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onEnded { value in
-                    let startX = value.startLocation.x
-                    let startedNearWave = isRotated
-                        ? startX > UIScreen.main.bounds.width - 96
-                        : startX < 96
-                    let swipedTowardOtherEdge = isRotated
-                        ? value.translation.width < -80
-                        : value.translation.width > 80
-                    if startedNearWave && swipedTowardOtherEdge {
-                        onSwipeReset()
-                    } else if abs(value.translation.width) < 24 {
-                        onTap()
-                    }
-                }
-        )
+        .onTapGesture(perform: onTap)
     }
 }
 
@@ -250,7 +227,18 @@ private struct PauseButton: View {
                 }
             )
             .contentShape(AmandeShape())
-            .onTapGesture(perform: onTap)
+            // Tap OU swipe vers la droite déclenchent la même chose (issue #6) — un seul
+            // geste gère les deux cas, ne pas ajouter .onTapGesture en plus (conflit avec
+            // le DragGesture ci-dessous). Le geste doit démarrer sur ce bouton, pas
+            // n'importe où sur l'écran de jeu.
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onEnded { value in
+                        if value.translation.width > 80 || abs(value.translation.width) < 24 {
+                            onTap()
+                        }
+                    }
+            )
     }
 }
 
@@ -277,8 +265,11 @@ private struct GameOverHalf: View {
 
             VStack(spacing: 0) {
                 if isLoser {
-                    // Fond de laque rouge : toujours un pion ivoire, quel que soit le camp battu.
-                    PawnIcon(fillColor: ChessClockColors.ivory, contourColor: ChessClockColors.lacquerRed, height: 40)
+                    // Le pion garde la couleur de son camp même sur fond de laque rouge
+                    // (Noirs = encre, Blancs = ivoire) — le contour opposé assure la lisibilité.
+                    let loserPawnColor = isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory
+                    let loserPawnContour = isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface
+                    PawnIcon(fillColor: loserPawnColor, contourColor: loserPawnContour, height: 40)
                     Text("DÉFAITE")
                         .font(ChessClockFonts.instrumentSerif(40))
                         .foregroundColor(ChessClockColors.ivory)
