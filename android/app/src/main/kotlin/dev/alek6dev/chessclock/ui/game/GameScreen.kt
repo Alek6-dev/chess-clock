@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -232,7 +233,7 @@ private fun PauseButton(onTap: () -> Unit, modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                imageVector = vectorResource(id = R.drawable.pause_button_shape),
+                imageVector = ImageVector.vectorResource(id = R.drawable.pause_button_shape),
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
             )

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
 import dev.alek6dev.chessclock.R
@@ -32,7 +33,7 @@ fun PawnIcon(variant: PawnVariant, height: Dp, alpha: Float = 1f, modifier: Modi
         PawnVariant.BLACK_CONTOUR -> R.drawable.pion_noir_contour_blanc
     }
     Image(
-        imageVector = vectorResource(id = drawableId),
+        imageVector = ImageVector.vectorResource(id = drawableId),
         contentDescription = null,
         modifier = modifier
             .width(height * (75f / 103f))
