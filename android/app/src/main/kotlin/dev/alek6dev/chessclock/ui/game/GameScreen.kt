@@ -96,7 +96,6 @@ fun GameScreen(
                     isRotated = true,
                     modifier = Modifier.weight(1f),
                     onTap = { state.pass(Player.BLACK); haptics.light() },
-                    onSwipeReset = { isPaused = true },
                 )
             }
 
@@ -119,7 +118,6 @@ fun GameScreen(
                     isRotated = false,
                     modifier = Modifier.weight(1f),
                     onTap = { state.pass(Player.WHITE); haptics.light() },
-                    onSwipeReset = { isPaused = true },
                 )
             }
         }
@@ -151,7 +149,6 @@ private fun PlayerZone(
     isRotated: Boolean,
     modifier: Modifier = Modifier,
     onTap: () -> Unit,
-    onSwipeReset: () -> Unit,
 ) {
     val isBlack = player == Player.BLACK
     // Le fond de zone EST la couleur du camp (maquettes officielles) : plus de matière
@@ -171,7 +168,11 @@ private fun PlayerZone(
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { rotationZ = if (isRotated) 180f else 0f }
-            .tapOrSwipeReset(isRotated = isRotated, onTap = onTap, onSwipeReset = onSwipeReset),
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onTap,
+            ),
     ) {
         RuledBackground(baseColor = baseColor, lineColor = ruleColor, modifier = Modifier.fillMaxSize())
 
@@ -231,11 +232,7 @@ private fun PauseButton(onTap: () -> Unit, modifier: Modifier = Modifier) {
                 .align(Alignment.Center)
                 .clip(AmandeShape())
                 .background(ChessClockColors.Paper)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onTap,
-                ),
+                .tapOrSwipeToTrigger(onTrigger = onTap),
             contentAlignment = Alignment.Center,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -274,8 +271,11 @@ private fun GameOverHalf(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (isLoser) {
-                // Fond de laque rouge : toujours un pion ivoire, quel que soit le camp battu.
-                PawnIcon(fillColor = ChessClockColors.Ivory, contourColor = ChessClockColors.LacquerRed, height = 40.dp)
+                // Le pion garde la couleur de son camp même sur fond de laque rouge (Noirs =
+                // encre, Blancs = ivoire) — le contour opposé assure la lisibilité.
+                val loserPawnColor = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory
+                val loserPawnContour = if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface
+                PawnIcon(fillColor = loserPawnColor, contourColor = loserPawnContour, height = 40.dp)
                 Text(
                     text = "DÉFAITE",
                     color = ChessClockColors.Ivory,
@@ -357,10 +357,10 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 30.dp)
+                .padding(horizontal = 24.dp)
                 .graphicsLayer { translationX = (progress.value - 1f) * slidePx }
                 .background(ChessClockColors.Paper)
-                .padding(32.dp),
+                .padding(24.dp),
         ) {
             Text(
                 text = "Pause",
@@ -394,7 +394,8 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                     fontFamily = ChessClockFonts.EBGaramond,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
-                    letterSpacing = 1.5.sp,
+                    letterSpacing = 1.sp,
+                    maxLines = 1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .weight(1f)
@@ -404,7 +405,7 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                             indication = null,
                             onClick = onResume,
                         )
-                        .padding(horizontal = 12.dp, vertical = 16.dp),
+                        .padding(horizontal = 6.dp, vertical = 16.dp),
                 )
                 Text(
                     text = "CONFIGURER",
@@ -412,7 +413,8 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                     fontFamily = ChessClockFonts.EBGaramond,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
-                    letterSpacing = 1.5.sp,
+                    letterSpacing = 1.sp,
+                    maxLines = 1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .weight(1f)
@@ -422,7 +424,7 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                             indication = null,
                             onClick = onConfigure,
                         )
-                        .padding(horizontal = 12.dp, vertical = 16.dp),
+                        .padding(horizontal = 6.dp, vertical = 16.dp),
                 )
             }
         }
