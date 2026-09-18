@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import dev.alek6dev.chessclock.model.GameTime
 import dev.alek6dev.chessclock.ui.components.WheelNumberPicker
 import dev.alek6dev.chessclock.ui.game.PawnIcon
+import dev.alek6dev.chessclock.ui.game.PawnVariant
 import dev.alek6dev.chessclock.ui.theme.ChessClockColors
 import dev.alek6dev.chessclock.ui.theme.ChessClockFonts
 import dev.alek6dev.chessclock.ui.theme.RuledBackground
@@ -192,9 +193,8 @@ private fun TimeWheelRow(
         if (swatch == null) {
             ComboPawnIcon(height = 60.dp)
         } else {
-            val pawnColor = if (swatch == CampSwatch.WHITE) ChessClockColors.Ivory else ChessClockColors.InkSurface
-            val pawnContour = if (swatch == CampSwatch.WHITE) ChessClockColors.InkSurface else ChessClockColors.Ivory
-            PawnIcon(fillColor = pawnColor, contourColor = pawnContour, height = 60.dp)
+            val pawnVariant = if (swatch == CampSwatch.WHITE) PawnVariant.WHITE_CONTOUR else PawnVariant.BLACK_CONTOUR
+            PawnIcon(variant = pawnVariant, height = 60.dp)
         }
         Spacer(Modifier.width(14.dp))
         WheelNumberPicker(
@@ -228,14 +228,12 @@ private fun TimeWheelRow(
 private fun ComboPawnIcon(height: Dp, modifier: Modifier = Modifier) {
     Box(modifier = modifier.width(height * 0.9f).height(height)) {
         PawnIcon(
-            fillColor = ChessClockColors.InkSurface,
-            contourColor = ChessClockColors.Ivory,
+            variant = PawnVariant.BLACK_CONTOUR,
             height = height,
             modifier = Modifier.align(Alignment.CenterEnd),
         )
         PawnIcon(
-            fillColor = ChessClockColors.Ivory,
-            contourColor = ChessClockColors.InkSurface,
+            variant = PawnVariant.WHITE_CONTOUR,
             height = height,
             modifier = Modifier.align(Alignment.CenterStart),
         )
