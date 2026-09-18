@@ -32,7 +32,7 @@ struct GameView: View {
                         isActive: state.activePlayer == .black,
                         isRotated: true,
                         onTap: { state.pass(.black); Haptics.light() },
-                        onSwipeReset: onReset
+                        onSwipeReset: { state.pause() }
                     )
                 }
 
@@ -52,19 +52,92 @@ struct GameView: View {
                         isActive: state.activePlayer == .white,
                         isRotated: false,
                         onTap: { state.pass(.white); Haptics.light() },
-                        onSwipeReset: onReset
+                        onSwipeReset: { state.pause() }
                     )
                 }
             }
 
             if !state.isOver {
-                PauseButton(onTap: onReset)
+                PauseButton(onTap: { state.pause() })
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             }
+
+            PauseOverlay(
+                isPaused: state.isPaused && !state.isOver,
+                onResume: { state.resume() },
+                onConfigure: onReset
+            )
         }
         .statusBar(hidden: true)
         .onChange(of: state.isOver) { isOver in
             if isOver { Haptics.doubleImpact() }
+        }
+    }
+}
+
+/// Modale de pause (issue #6) : déclenchée par swipe ou par le bouton pause, comportement
+/// identique dans les deux cas. Transition d'entrée "tirée" depuis la gauche vers la droite.
+private struct PauseOverlay: View {
+    let isPaused: Bool
+    let onResume: () -> Void
+    let onConfigure: () -> Void
+
+    @State private var progress: CGFloat = 0
+
+    var body: some View {
+        if isPaused {
+            ZStack {
+                ChessClockColors.inkNight.opacity(0.55 * progress)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .onTapGesture {} // capte les taps derrière la modale
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Pause")
+                        .font(ChessClockFonts.instrumentSerif(34))
+                        .foregroundColor(ChessClockColors.inkSurface)
+                    Rectangle()
+                        .fill(ChessClockColors.lineRule)
+                        .frame(height: 1)
+                        .padding(.vertical, 16)
+                    Text("Votre partie est en pause, les deux chronomètres sont arrêtés.")
+                        .font(ChessClockFonts.ebGaramond(16))
+                        .foregroundColor(ChessClockColors.inkSurface)
+                    Spacer().frame(height: 12)
+                    Text("Souhaitez-vous reprendre votre partie en cours ou en configurer une nouvelle ?")
+                        .font(ChessClockFonts.ebGaramond(16))
+                        .foregroundColor(ChessClockColors.inkSurface)
+                    Spacer().frame(height: 28)
+                    HStack(spacing: 14) {
+                        Text("REPRENDRE")
+                            .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
+                            .tracking(1.5)
+                            .foregroundColor(ChessClockColors.paper)
+                            .padding(.horizontal, 22)
+                            .padding(.vertical, 16)
+                            .background(ChessClockColors.inkSurface)
+                            .onTapGesture(perform: onResume)
+                        Text("CONFIGURER")
+                            .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
+                            .tracking(1.5)
+                            .foregroundColor(ChessClockColors.inkSurface)
+                            .padding(.horizontal, 22)
+                            .padding(.vertical, 16)
+                            .overlay(Rectangle().stroke(ChessClockColors.inkSurface, lineWidth: 1))
+                            .onTapGesture(perform: onConfigure)
+                    }
+                }
+                .padding(32)
+                .background(ChessClockColors.paper)
+                .padding(.horizontal, 30)
+                .offset(x: (progress - 1) * 420)
+            }
+            .onAppear {
+                progress = 0
+                withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.32)) {
+                    progress = 1
+                }
+            }
         }
     }
 }

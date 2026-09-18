@@ -9,6 +9,7 @@ final class GameClockState: ObservableObject {
     @Published private(set) var blackSeconds: Int
     @Published private(set) var activePlayer: Player = .white
     @Published private(set) var isOver = false
+    @Published private(set) var isPaused = false
 
     private var timer: Timer?
 
@@ -31,14 +32,28 @@ final class GameClockState: ObservableObject {
 
     /// Tap sur la zone active : passe la main.
     func pass(_ tappedPlayer: Player) {
-        guard !isOver, tappedPlayer == activePlayer else { return }
+        guard !isOver, !isPaused, tappedPlayer == activePlayer else { return }
         activePlayer = activePlayer.opponent
+        scheduleTimer()
+    }
+
+    /// Pause (issue #6) : coupe le tick, aucun temps n'est consommé pendant ce temps.
+    func pause() {
+        guard !isOver, !isPaused else { return }
+        isPaused = true
+        timer?.invalidate()
+    }
+
+    /// Reprend exactement où la partie avait été mise en pause.
+    func resume() {
+        guard !isOver, isPaused else { return }
+        isPaused = false
         scheduleTimer()
     }
 
     private func scheduleTimer() {
         timer?.invalidate()
-        guard !isOver else { return }
+        guard !isOver, !isPaused else { return }
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.tick()
         }

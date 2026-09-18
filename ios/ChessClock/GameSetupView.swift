@@ -104,6 +104,27 @@ private struct CheckboxRow: View {
 
 private enum CampSwatch { case white, black }
 
+/// Roue native (scroll/snap déjà fiables) avec un encart ivoire plein derrière la valeur
+/// centrale, pour matcher la maquette sans réécrire tout le mécanisme de défilement.
+private struct HighlightedWheel: View {
+    @Binding var selection: Int
+
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(ChessClockColors.ivory)
+                .frame(width: 64, height: 52)
+            Picker("", selection: $selection) {
+                ForEach(0..<60) { value in
+                    Text("\(value)").tag(value)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 90)
+        }
+    }
+}
+
 private struct TimeWheelRow: View {
     let swatch: CampSwatch?
     @Binding var time: GameTime
@@ -123,30 +144,12 @@ private struct TimeWheelRow: View {
                 .frame(width: 30, height: 9)
             }
 
-            HStack(spacing: 8) {
-                Picker("Minutes", selection: $time.minutes) {
-                    ForEach(0..<60) { value in
-                        Text("\(value)").tag(value)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 90)
-
-                Text("min")
-                    .font(ChessClockFonts.ebGaramond(15))
-                    .foregroundColor(ChessClockColors.leather)
-
-                Picker("Secondes", selection: $time.seconds) {
-                    ForEach(0..<60) { value in
-                        Text("\(value)").tag(value)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 90)
-
-                Text("s")
-                    .font(ChessClockFonts.ebGaramond(15))
-                    .foregroundColor(ChessClockColors.leather)
+            HStack(spacing: 10) {
+                HighlightedWheel(selection: $time.minutes)
+                Text(":")
+                    .font(ChessClockFonts.instrumentSerif(34))
+                    .foregroundColor(ChessClockColors.inkSurface)
+                HighlightedWheel(selection: $time.seconds)
             }
         }
     }
