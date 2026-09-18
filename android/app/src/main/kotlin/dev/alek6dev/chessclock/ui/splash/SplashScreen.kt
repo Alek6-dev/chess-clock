@@ -1,8 +1,7 @@
 package dev.alek6dev.chessclock.ui.splash
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,32 +88,26 @@ fun SplashScreen(onContinue: () -> Unit) {
 
 @Composable
 private fun PulsingOrb(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "splash-orb-pulse")
-    val scale by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.9f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1400, easing = LinearOutSlowInEasing),
-        ),
-        label = "scale",
-    )
-    val ringAlpha by transition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1400, easing = LinearOutSlowInEasing),
-        ),
-        label = "alpha",
-    )
+    // Boucle manuelle plutôt que rememberInfiniteTransition().animateFloat() : cette
+    // dernière API ne se résout pas dans cette config de build, alors qu'Animatable/tween
+    // (même artefact animation-core) compilent sans souci ailleurs dans l'app.
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            progress.animateTo(1f, animationSpec = tween(durationMillis = 1400, easing = LinearOutSlowInEasing))
+            progress.snapTo(0f)
+        }
+    }
 
     Box(modifier = modifier.size(56.dp), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
                 .size(56.dp)
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    alpha = ringAlpha
+                    val s = 1f + progress.value * 0.9f
+                    scaleX = s
+                    scaleY = s
+                    alpha = 0.5f * (1f - progress.value)
                 }
                 .background(ChessClockColors.Ivory, CircleShape),
         )
