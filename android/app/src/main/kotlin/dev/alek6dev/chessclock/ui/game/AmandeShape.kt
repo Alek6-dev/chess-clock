@@ -8,9 +8,9 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 
 /**
- * Encoche du bouton pause — seule courbe de toute l'app (planche § Bouton pause & encoche).
- * Deux arcs symétriques qui se referment en pointe sur le bord gauche, bombement maximal au
- * centre. Tracé de référence (boîte 34 × 210) mis à l'échelle de la taille réelle du composant.
+ * Encoche du bouton pause — seule courbe de toute l'app. Mesurée directement sur la maquette
+ * officielle (pixel par pixel) : une amande tangente au bord gauche, large de ~52 pt pour
+ * ~84 pt de haut (nettement plus trapue qu'un premier essai à vue, pas un fuseau étroit).
  */
 class AmandeShape : Shape {
     override fun createOutline(
@@ -22,8 +22,8 @@ class AmandeShape : Shape {
         val h = size.height
         val path = Path().apply {
             moveTo(0f, 0f)
-            cubicTo(w * 18f / 34f, h * 62f / 210f, w, h * 82f / 210f, w, h * 105f / 210f)
-            cubicTo(w, h * 128f / 210f, w * 18f / 34f, h * 148f / 210f, 0f, h)
+            cubicTo(w * 0.85f, h * 0.08f, w, h * 0.30f, w, h * 0.5f)
+            cubicTo(w, h * 0.70f, w * 0.85f, h * 0.92f, 0f, h)
             close()
         }
         return Outline.Generic(path)

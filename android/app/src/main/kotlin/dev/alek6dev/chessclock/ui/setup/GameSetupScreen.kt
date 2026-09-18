@@ -25,10 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.alek6dev.chessclock.model.GameTime
 import dev.alek6dev.chessclock.ui.components.WheelNumberPicker
+import dev.alek6dev.chessclock.ui.game.PawnIcon
 import dev.alek6dev.chessclock.ui.theme.ChessClockColors
 import dev.alek6dev.chessclock.ui.theme.ChessClockFonts
 import dev.alek6dev.chessclock.ui.theme.RuledBackground
@@ -79,11 +81,13 @@ fun GameSetupScreen(
                 color = ChessClockColors.InkSurface,
                 fontFamily = ChessClockFonts.InstrumentSerif,
                 fontSize = 34.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(8.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(ChessClockColors.Leather.copy(alpha = 0.45f)))
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(44.dp))
 
             CheckboxRow(
                 checked = sameTimeForBoth,
@@ -166,33 +170,6 @@ private fun CheckboxRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     }
 }
 
-/**
- * Roue native (scroll/snap déjà fiables) avec un encart sombre plein derrière la valeur
- * centrale, pour matcher la maquette sans réécrire tout le mécanisme de défilement.
- */
-@Composable
-private fun HighlightedWheel(
-    range: IntRange,
-    value: Int,
-    onValueChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Box(
-            modifier = Modifier
-                .width(64.dp)
-                .height(52.dp)
-                .background(ChessClockColors.Ivory),
-        )
-        WheelNumberPicker(
-            range = range,
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.width(90.dp),
-        )
-    }
-}
-
 private enum class CampSwatch { WHITE, BLACK }
 
 @Composable
@@ -202,41 +179,66 @@ private fun TimeWheelRow(
     onTimeChange: (GameTime) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        if (swatch != null) {
-            Box(
-                modifier = Modifier
-                    .size(width = 30.dp, height = 9.dp)
-                    .then(
-                        if (swatch == CampSwatch.WHITE) {
-                            Modifier
-                                .background(ChessClockColors.Ivory)
-                                .border(width = 1.dp, color = ChessClockColors.Leather)
-                        } else {
-                            Modifier.background(ChessClockColors.Leather)
-                        },
-                    ),
-            )
-            Spacer(Modifier.height(12.dp))
+    // Par défaut (mode "temps identique", aucun camp) : encart encre + texte ivoire.
+    // Par joueur : encart et texte dans la couleur du camp de cette roue.
+    val boxColor = if (swatch == CampSwatch.WHITE) ChessClockColors.Ivory else ChessClockColors.InkSurface
+    val selectedTextColor = if (swatch == CampSwatch.WHITE) ChessClockColors.InkSurface else ChessClockColors.Ivory
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (swatch == null) {
+            ComboPawnIcon(height = 60.dp)
+        } else {
+            val pawnColor = if (swatch == CampSwatch.WHITE) ChessClockColors.Ivory else ChessClockColors.InkSurface
+            val pawnContour = if (swatch == CampSwatch.WHITE) ChessClockColors.InkSurface else ChessClockColors.Ivory
+            PawnIcon(fillColor = pawnColor, contourColor = pawnContour, height = 60.dp)
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            HighlightedWheel(
-                range = 0..59,
-                value = time.minutes,
-                onValueChange = { onTimeChange(time.copy(minutes = it)) },
-            )
-            Text(
-                text = ":",
-                color = ChessClockColors.InkSurface,
-                fontFamily = ChessClockFonts.InstrumentSerif,
-                fontSize = 34.sp,
-            )
-            HighlightedWheel(
-                range = 0..59,
-                value = time.seconds,
-                onValueChange = { onTimeChange(time.copy(seconds = it)) },
-            )
-        }
+        Spacer(Modifier.width(14.dp))
+        WheelNumberPicker(
+            range = 0..59,
+            value = time.minutes,
+            onValueChange = { onTimeChange(time.copy(minutes = it)) },
+            boxColor = boxColor,
+            selectedTextColor = selectedTextColor,
+            modifier = Modifier.width(90.dp),
+        )
+        Text(
+            text = ":",
+            color = ChessClockColors.InkSurface,
+            fontFamily = ChessClockFonts.InstrumentSerif,
+            fontSize = 34.sp,
+            modifier = Modifier.padding(horizontal = 10.dp),
+        )
+        WheelNumberPicker(
+            range = 0..59,
+            value = time.seconds,
+            onValueChange = { onTimeChange(time.copy(seconds = it)) },
+            boxColor = boxColor,
+            selectedTextColor = selectedTextColor,
+            modifier = Modifier.width(90.dp),
+        )
+    }
+}
+
+/** Icône par défaut (mode "temps identique") : les deux pions se chevauchent, un par camp. */
+@Composable
+private fun ComboPawnIcon(height: Dp, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.width(height * 0.9f).height(height)) {
+        PawnIcon(
+            fillColor = ChessClockColors.InkSurface,
+            contourColor = ChessClockColors.Ivory,
+            height = height,
+            modifier = Modifier.align(Alignment.CenterEnd),
+        )
+        PawnIcon(
+            fillColor = ChessClockColors.Ivory,
+            contourColor = ChessClockColors.InkSurface,
+            height = height,
+            modifier = Modifier.align(Alignment.CenterStart),
+        )
     }
 }
 

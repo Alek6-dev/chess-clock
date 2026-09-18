@@ -83,6 +83,7 @@ fun GameScreen(
                     isLoser = state.timedOutPlayer == Player.BLACK,
                     seconds = state.secondsFor(Player.BLACK),
                     isRotated = true,
+                    showReplayButton = false,
                     onRematch = onReset,
                     modifier = Modifier.weight(1f),
                 )
@@ -105,6 +106,7 @@ fun GameScreen(
                     isLoser = state.timedOutPlayer == Player.WHITE,
                     seconds = state.secondsFor(Player.WHITE),
                     isRotated = false,
+                    showReplayButton = true,
                     onRematch = onReset,
                     modifier = Modifier.weight(1f),
                 )
@@ -122,7 +124,7 @@ fun GameScreen(
             }
         }
 
-        if (!state.isOver) {
+        if (!state.isOver && !isPaused) {
             PauseButton(onTap = { isPaused = true }, modifier = Modifier.align(Alignment.CenterStart))
         }
 
@@ -222,13 +224,13 @@ private fun OpponentBadge(
 
 @Composable
 private fun PauseButton(onTap: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxHeight().width(34.dp)) {
+    Box(modifier = modifier.fillMaxHeight().width(52.dp)) {
         Box(
             modifier = Modifier
-                .size(width = 34.dp, height = 210.dp)
+                .size(width = 52.dp, height = 84.dp)
                 .align(Alignment.Center)
                 .clip(AmandeShape())
-                .background(ChessClockColors.InkSurface)
+                .background(ChessClockColors.Paper)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -237,8 +239,8 @@ private fun PauseButton(onTap: () -> Unit, modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                Box(Modifier.size(width = 3.5.dp, height = 14.dp).background(ChessClockColors.Ivory))
-                Box(Modifier.size(width = 3.5.dp, height = 14.dp).background(ChessClockColors.Ivory))
+                Box(Modifier.size(width = 3.5.dp, height = 14.dp).background(ChessClockColors.InkSurface))
+                Box(Modifier.size(width = 3.5.dp, height = 14.dp).background(ChessClockColors.InkSurface))
             }
         }
     }
@@ -250,6 +252,7 @@ private fun GameOverHalf(
     isLoser: Boolean,
     seconds: Int,
     isRotated: Boolean,
+    showReplayButton: Boolean,
     onRematch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -297,9 +300,15 @@ private fun GameOverHalf(
                     fontSize = 72.sp,
                     modifier = Modifier.padding(top = 8.dp),
                 )
+            }
+
+            // REJOUER est toujours dans la moitié Blancs (bas de l'écran), jamais chez les
+            // Noirs — vérifié sur les deux scénarios (Blancs ou Noirs perdant) des maquettes
+            // officielles : sa position ne dépend pas de qui a gagné.
+            if (showReplayButton) {
                 Text(
                     text = "REJOUER",
-                    color = if (isBlack) ChessClockColors.InkSurface else ChessClockColors.Ivory,
+                    color = ChessClockColors.Paper,
                     fontFamily = ChessClockFonts.EBGaramond,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
@@ -307,7 +316,7 @@ private fun GameOverHalf(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .padding(top = 40.dp)
-                        .background(if (isBlack) ChessClockColors.Ivory else ChessClockColors.InkSurface)
+                        .background(ChessClockColors.InkSurface)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -358,6 +367,8 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                 color = ChessClockColors.InkSurface,
                 fontFamily = ChessClockFonts.InstrumentSerif,
                 fontSize = 34.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(16.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(ChessClockColors.LineRule))
@@ -384,14 +395,16 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
                     letterSpacing = 1.5.sp,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
+                        .weight(1f)
                         .background(ChessClockColors.InkSurface)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = onResume,
                         )
-                        .padding(horizontal = 22.dp, vertical = 16.dp),
+                        .padding(horizontal = 12.dp, vertical = 16.dp),
                 )
                 Text(
                     text = "CONFIGURER",
@@ -400,14 +413,16 @@ private fun PauseOverlay(isPaused: Boolean, onResume: () -> Unit, onConfigure: (
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
                     letterSpacing = 1.5.sp,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
+                        .weight(1f)
                         .border(width = 1.dp, color = ChessClockColors.InkSurface)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = onConfigure,
                         )
-                        .padding(horizontal = 22.dp, vertical = 16.dp),
+                        .padding(horizontal = 12.dp, vertical = 16.dp),
                 )
             }
         }
