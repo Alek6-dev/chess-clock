@@ -166,6 +166,33 @@ private fun CheckboxRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     }
 }
 
+/**
+ * Roue native (scroll/snap déjà fiables) avec un encart sombre plein derrière la valeur
+ * centrale, pour matcher la maquette sans réécrire tout le mécanisme de défilement.
+ */
+@Composable
+private fun HighlightedWheel(
+    range: IntRange,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .width(64.dp)
+                .height(52.dp)
+                .background(ChessClockColors.Ivory),
+        )
+        WheelNumberPicker(
+            range = range,
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.width(90.dp),
+        )
+    }
+}
+
 private enum class CampSwatch { WHITE, BLACK }
 
 @Composable
@@ -192,30 +219,22 @@ private fun TimeWheelRow(
             )
             Spacer(Modifier.height(12.dp))
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            WheelNumberPicker(
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            HighlightedWheel(
                 range = 0..59,
                 value = time.minutes,
                 onValueChange = { onTimeChange(time.copy(minutes = it)) },
             )
             Text(
-                text = "min",
-                color = ChessClockColors.Leather,
-                fontFamily = ChessClockFonts.EBGaramond,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                text = ":",
+                color = ChessClockColors.InkSurface,
+                fontFamily = ChessClockFonts.InstrumentSerif,
+                fontSize = 34.sp,
             )
-            WheelNumberPicker(
+            HighlightedWheel(
                 range = 0..59,
                 value = time.seconds,
                 onValueChange = { onTimeChange(time.copy(seconds = it)) },
-            )
-            Text(
-                text = "s",
-                color = ChessClockColors.Leather,
-                fontFamily = ChessClockFonts.EBGaramond,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(start = 8.dp),
             )
         }
     }
