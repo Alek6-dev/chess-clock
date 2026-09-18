@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Écran de jeu — issues #2 (démarrer), #3 (passer la main), #4 (affichage temps réel),
 /// #5 (fin de partie) et #6 (reset direct par swipe ou bouton pause, sans confirmation).
@@ -22,6 +23,7 @@ struct GameView: View {
                         isLoser: state.timedOutPlayer == .black,
                         seconds: state.seconds(for: .black),
                         isRotated: true,
+                        showReplayButton: false,
                         onRematch: onReset
                     )
                 } else {
@@ -42,6 +44,7 @@ struct GameView: View {
                         isLoser: state.timedOutPlayer == .white,
                         seconds: state.seconds(for: .white),
                         isRotated: false,
+                        showReplayButton: true,
                         onRematch: onReset
                     )
                 } else {
@@ -57,7 +60,7 @@ struct GameView: View {
                 }
             }
 
-            if !state.isOver {
+            if !state.isOver && !state.isPaused {
                 PauseButton(onTap: { state.pause() })
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             }
@@ -96,6 +99,7 @@ private struct PauseOverlay: View {
                     Text("Pause")
                         .font(ChessClockFonts.instrumentSerif(34))
                         .foregroundColor(ChessClockColors.inkSurface)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     Rectangle()
                         .fill(ChessClockColors.lineRule)
                         .frame(height: 1)
@@ -112,16 +116,20 @@ private struct PauseOverlay: View {
                         Text("REPRENDRE")
                             .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
                             .tracking(1.5)
+                            .multilineTextAlignment(.center)
                             .foregroundColor(ChessClockColors.paper)
-                            .padding(.horizontal, 22)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 8)
                             .padding(.vertical, 16)
                             .background(ChessClockColors.inkSurface)
                             .onTapGesture(perform: onResume)
                         Text("CONFIGURER")
                             .font(ChessClockFonts.ebGaramond(13, weight: .semiBold))
                             .tracking(1.5)
+                            .multilineTextAlignment(.center)
                             .foregroundColor(ChessClockColors.inkSurface)
-                            .padding(.horizontal, 22)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 8)
                             .padding(.vertical, 16)
                             .overlay(Rectangle().stroke(ChessClockColors.inkSurface, lineWidth: 1))
                             .onTapGesture(perform: onConfigure)
@@ -190,16 +198,21 @@ private struct PlayerZone: View {
         .rotationEffect(.degrees(isRotated ? 180 : 0))
         .contentShape(Rectangle())
         // Tap sur sa zone = passe la main. Swipe du bouton pause vers l'autre bord (gauche ->
-        // droite à l'écran) = reset direct (issue #6). La zone des Noirs étant tournée à
-        // 180°, sa translation est dans un repère local déjà inversé : "vers la droite de
-        // l'écran" y correspond à une translation négative.
+        // droite à l'écran), démarré près de la vague, = pause (issue #6). La zone des Noirs
+        // étant tournée à 180°, sa translation est dans un repère local déjà inversé : "vers
+        // la droite de l'écran" y correspond à une translation négative, et "près de la
+        // vague" (bord gauche à l'écran) correspond au bord DROIT du repère local.
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onEnded { value in
+                    let startX = value.startLocation.x
+                    let startedNearWave = isRotated
+                        ? startX > UIScreen.main.bounds.width - 96
+                        : startX < 96
                     let swipedTowardOtherEdge = isRotated
                         ? value.translation.width < -80
                         : value.translation.width > 80
-                    if swipedTowardOtherEdge {
+                    if startedNearWave && swipedTowardOtherEdge {
                         onSwipeReset()
                     } else if abs(value.translation.width) < 24 {
                         onTap()
@@ -228,12 +241,12 @@ private struct PauseButton: View {
 
     var body: some View {
         AmandeShape()
-            .fill(ChessClockColors.inkSurface)
-            .frame(width: 34, height: 210)
+            .fill(ChessClockColors.paper)
+            .frame(width: 52, height: 84)
             .overlay(
                 HStack(spacing: 7) {
-                    Rectangle().fill(ChessClockColors.ivory).frame(width: 3.5, height: 14)
-                    Rectangle().fill(ChessClockColors.ivory).frame(width: 3.5, height: 14)
+                    Rectangle().fill(ChessClockColors.inkSurface).frame(width: 3.5, height: 14)
+                    Rectangle().fill(ChessClockColors.inkSurface).frame(width: 3.5, height: 14)
                 }
             )
             .contentShape(AmandeShape())
@@ -246,6 +259,7 @@ private struct GameOverHalf: View {
     let isLoser: Bool
     let seconds: Int
     let isRotated: Bool
+    let showReplayButton: Bool
     let onRematch: () -> Void
 
     private var isBlack: Bool { player == .black }
@@ -283,14 +297,20 @@ private struct GameOverHalf: View {
                         fontSize: 72
                     )
                     .padding(.top, 8)
+                }
+
+                // REJOUER est toujours dans la moitié Blancs (bas de l'écran), jamais chez
+                // les Noirs — vérifié sur les deux scénarios (Blancs ou Noirs perdant) des
+                // maquettes officielles : sa position ne dépend pas de qui a gagné.
+                if showReplayButton {
                     Button(action: onRematch) {
                         Text("REJOUER")
                             .font(ChessClockFonts.ebGaramond(14, weight: .semiBold))
                             .tracking(2)
-                            .foregroundColor(isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory)
+                            .foregroundColor(ChessClockColors.paper)
                             .padding(.horizontal, 52)
                             .padding(.vertical, 20)
-                            .background(isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface)
+                            .background(ChessClockColors.inkSurface)
                     }
                     .padding(.top, 40)
                 }

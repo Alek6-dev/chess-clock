@@ -20,11 +20,13 @@ struct GameSetupView: View {
                 Text("Configuration")
                     .font(ChessClockFonts.instrumentSerif(34))
                     .foregroundColor(ChessClockColors.inkSurface)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
                 Rectangle()
                     .fill(ChessClockColors.leather.opacity(0.45))
                     .frame(height: 1)
-                    .padding(.vertical, 22)
+                    .padding(.top, 8)
+                    .padding(.bottom, 44)
 
                 CheckboxRow(
                     checked: sameTimeForBoth,
@@ -104,19 +106,26 @@ private struct CheckboxRow: View {
 
 private enum CampSwatch { case white, black }
 
-/// Roue native (scroll/snap déjà fiables) avec un encart ivoire plein derrière la valeur
-/// centrale, pour matcher la maquette sans réécrire tout le mécanisme de défilement.
+/// Roue native (le scroll/snap de Picker(.wheel) est déjà fiable) avec un encart plein
+/// derrière la valeur centrale. Contrairement à un NumberPicker Android, chaque ligne est ici
+/// un Text que l'on fournit nous-même : on peut donc colorer la valeur sélectionnée
+/// différemment de ses voisines sans widget custom.
 private struct HighlightedWheel: View {
     @Binding var selection: Int
+    let boxColor: Color
+    let selectedTextColor: Color
 
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(ChessClockColors.ivory)
+                .fill(boxColor)
                 .frame(width: 64, height: 52)
             Picker("", selection: $selection) {
                 ForEach(0..<60) { value in
-                    Text("\(value)").tag(value)
+                    Text(String(format: "%02d", value))
+                        .font(ChessClockFonts.instrumentSerif(value == selection ? 34 : 24))
+                        .foregroundColor(value == selection ? selectedTextColor : ChessClockColors.inkSurface)
+                        .tag(value)
                 }
             }
             .pickerStyle(.wheel)
@@ -129,29 +138,43 @@ private struct TimeWheelRow: View {
     let swatch: CampSwatch?
     @Binding var time: GameTime
 
+    // Par défaut (mode "temps identique", aucun camp) : encart encre + texte ivoire.
+    // Par joueur : encart et texte dans la couleur du camp de cette roue.
+    private var boxColor: Color { swatch == .white ? ChessClockColors.ivory : ChessClockColors.inkSurface }
+    private var selectedTextColor: Color { swatch == .white ? ChessClockColors.inkSurface : ChessClockColors.ivory }
+
     var body: some View {
-        VStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 14) {
             if let swatch {
-                Group {
-                    if swatch == .white {
-                        Rectangle()
-                            .fill(ChessClockColors.ivory)
-                            .overlay(Rectangle().stroke(ChessClockColors.leather, lineWidth: 1))
-                    } else {
-                        Rectangle().fill(ChessClockColors.leather)
-                    }
-                }
-                .frame(width: 30, height: 9)
+                let pawnColor = swatch == .white ? ChessClockColors.ivory : ChessClockColors.inkSurface
+                let pawnContour = swatch == .white ? ChessClockColors.inkSurface : ChessClockColors.ivory
+                PawnIcon(fillColor: pawnColor, contourColor: pawnContour, height: 60)
+            } else {
+                ComboPawnIcon(height: 60)
             }
 
-            HStack(spacing: 10) {
-                HighlightedWheel(selection: $time.minutes)
-                Text(":")
-                    .font(ChessClockFonts.instrumentSerif(34))
-                    .foregroundColor(ChessClockColors.inkSurface)
-                HighlightedWheel(selection: $time.seconds)
-            }
+            HighlightedWheel(selection: $time.minutes, boxColor: boxColor, selectedTextColor: selectedTextColor)
+            Text(":")
+                .font(ChessClockFonts.instrumentSerif(34))
+                .foregroundColor(ChessClockColors.inkSurface)
+            HighlightedWheel(selection: $time.seconds, boxColor: boxColor, selectedTextColor: selectedTextColor)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
+/// Icône par défaut (mode "temps identique") : les deux pions se chevauchent, un par camp.
+private struct ComboPawnIcon: View {
+    let height: CGFloat
+
+    var body: some View {
+        ZStack {
+            PawnIcon(fillColor: ChessClockColors.inkSurface, contourColor: ChessClockColors.ivory, height: height)
+                .offset(x: height * 0.22)
+            PawnIcon(fillColor: ChessClockColors.ivory, contourColor: ChessClockColors.inkSurface, height: height)
+                .offset(x: -height * 0.22)
+        }
+        .frame(width: height * 0.9, height: height)
     }
 }
 
