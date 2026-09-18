@@ -146,9 +146,8 @@ private struct TimeWheelRow: View {
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             if let swatch {
-                let pawnColor = swatch == .white ? ChessClockColors.ivory : ChessClockColors.inkSurface
-                let pawnContour = swatch == .white ? ChessClockColors.inkSurface : ChessClockColors.ivory
-                PawnIcon(fillColor: pawnColor, contourColor: pawnContour, height: 60)
+                let pawnVariant: PawnVariant = swatch == .white ? .whiteContour : .blackContour
+                PawnIcon(variant: pawnVariant, height: 60)
             } else {
                 ComboPawnIcon(height: 60)
             }
@@ -169,9 +168,9 @@ private struct ComboPawnIcon: View {
 
     var body: some View {
         ZStack {
-            PawnIcon(fillColor: ChessClockColors.inkSurface, contourColor: ChessClockColors.ivory, height: height)
+            PawnIcon(variant: .blackContour, height: height)
                 .offset(x: height * 0.22)
-            PawnIcon(fillColor: ChessClockColors.ivory, contourColor: ChessClockColors.inkSurface, height: height)
+            PawnIcon(variant: .whiteContour, height: height)
                 .offset(x: -height * 0.22)
         }
         .frame(width: height * 0.9, height: height)

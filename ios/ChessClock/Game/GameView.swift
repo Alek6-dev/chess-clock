@@ -166,16 +166,14 @@ private struct PlayerZone: View {
     private var isBlack: Bool { player == .black }
     // Le fond de zone EST la couleur du camp (maquettes officielles) : plus de matière
     // cuir/papier séparée. Le pion de son propre camp s'y fond donc entièrement — seul son
-    // contour (ton opposé) le rend visible.
+    // contour (variante "Contour" fournie) le rend visible.
     private var baseColor: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
     private var lineColor: Color { isBlack ? ChessClockColors.ivory.opacity(0.03) : ChessClockColors.leather.opacity(0.05) }
     private var activeColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
     private var inactiveColor: Color { activeColor.opacity(0.6) }
-    private var campColor: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
-    private var campContour: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
-    private var opponentCampColor: Color { isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface }
-    private var opponentCampContour: Color { isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory }
-    private var pawnColor: Color { campColor.opacity(isActive ? 1 : 0.6) }
+    private var campPawn: PawnVariant { isBlack ? .blackContour : .whiteContour }
+    private var opponentPawn: PawnVariant { isBlack ? .whiteFull : .blackFull }
+    private var pawnOpacity: Double { isActive ? 1 : 0.6 }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -184,12 +182,12 @@ private struct PlayerZone: View {
             // Pion au-dessus, chrono en dessous — authoré identique pour les deux zones : la
             // rotation de la zone du haut se charge de l'inverser visuellement à l'écran.
             VStack(spacing: 8) {
-                PawnIcon(fillColor: pawnColor, contourColor: campContour, height: 40)
+                PawnIcon(variant: campPawn, height: 40, opacity: pawnOpacity)
                 TabularTimeText(text: formatTime(ownSeconds), color: isActive ? activeColor : inactiveColor, fontSize: 72)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            OpponentBadge(seconds: opponentSeconds, pawnColor: opponentCampColor, pawnContour: opponentCampContour, textColor: activeColor)
+            OpponentBadge(seconds: opponentSeconds, pawnVariant: opponentPawn, textColor: activeColor)
                 .padding(22)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -201,13 +199,12 @@ private struct PlayerZone: View {
 
 private struct OpponentBadge: View {
     let seconds: Int
-    let pawnColor: Color
-    let pawnContour: Color
+    let pawnVariant: PawnVariant
     let textColor: Color
 
     var body: some View {
         HStack(spacing: 8) {
-            PawnIcon(fillColor: pawnColor, contourColor: pawnContour, height: 18)
+            PawnIcon(variant: pawnVariant, height: 18)
             TabularTimeText(text: formatTime(seconds), color: textColor, fontSize: 15)
         }
     }
@@ -217,16 +214,17 @@ private struct PauseButton: View {
     let onTap: () -> Void
 
     var body: some View {
-        AmandeShape()
-            .fill(ChessClockColors.paper)
-            .frame(width: 52, height: 84)
+        Image("pause-button")
+            .resizable()
+            .aspectRatio(28.0 / 94.0, contentMode: .fit)
+            .frame(width: 28, height: 94)
             .overlay(
                 HStack(spacing: 7) {
                     Rectangle().fill(ChessClockColors.inkSurface).frame(width: 3.5, height: 14)
                     Rectangle().fill(ChessClockColors.inkSurface).frame(width: 3.5, height: 14)
                 }
             )
-            .contentShape(AmandeShape())
+            .contentShape(Rectangle())
             // Tap OU swipe vers la droite déclenchent la même chose (issue #6) — un seul
             // geste gère les deux cas, ne pas ajouter .onTapGesture en plus (conflit avec
             // le DragGesture ci-dessous). Le geste doit démarrer sur ce bouton, pas
@@ -267,9 +265,8 @@ private struct GameOverHalf: View {
                 if isLoser {
                     // Le pion garde la couleur de son camp même sur fond de laque rouge
                     // (Noirs = encre, Blancs = ivoire) — le contour opposé assure la lisibilité.
-                    let loserPawnColor = isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory
-                    let loserPawnContour = isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface
-                    PawnIcon(fillColor: loserPawnColor, contourColor: loserPawnContour, height: 40)
+                    let loserPawn: PawnVariant = isBlack ? .blackContour : .whiteContour
+                    PawnIcon(variant: loserPawn, height: 40)
                     Text("DÉFAITE")
                         .font(ChessClockFonts.instrumentSerif(40))
                         .foregroundColor(ChessClockColors.ivory)
@@ -279,9 +276,8 @@ private struct GameOverHalf: View {
                         .foregroundColor(ChessClockColors.textOnLacquer)
                         .padding(.top, 4)
                 } else {
-                    let pawnColor = isBlack ? ChessClockColors.inkSurface : ChessClockColors.ivory
-                    let pawnContour = isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface
-                    PawnIcon(fillColor: pawnColor, contourColor: pawnContour, height: 40)
+                    let winnerPawn: PawnVariant = isBlack ? .blackContour : .whiteContour
+                    PawnIcon(variant: winnerPawn, height: 40)
                     TabularTimeText(
                         text: formatTime(seconds),
                         color: isBlack ? ChessClockColors.ivory : ChessClockColors.inkSurface,
