@@ -24,3 +24,45 @@ workflows:
       branch_patterns:
         - pattern: main
           include: true
+
+  ios-testflight:
+    name: iOS - TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Alek6dev
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.alek6dev.chessclock
+      vars:
+        BUNDLE_ID: "com.alek6dev.chessclock"
+        XCODE_SCHEME: "ChessClock"
+      xcode: latest
+    scripts:
+      - name: Générer le projet Xcode avec XcodeGen
+        script: |
+          brew install xcodegen
+          cd ios
+          xcodegen generate
+      - name: Initialiser le keychain de signature
+        script: keychain initialize
+      - name: Récupérer le certificat et le profil de provisioning App Store
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+      - name: Appliquer les profils de provisioning récupérés
+        script: xcode-project use-profiles
+      - name: Builder l'ipa signé pour distribution App Store
+        script: |
+          cd ios
+          xcode-project build-ipa \
+            --project ChessClock.xcodeproj \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - ios/build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
