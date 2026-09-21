@@ -68,12 +68,18 @@ workflows:
       - name: Builder l'ipa signé pour distribution App Store
         script: |
           cd ios
+          echo "Contenu de build/ios/ipa avant build :"
+          ls -la build/ios/ipa 2>/dev/null || echo "(dossier absent, rien à nettoyer)"
+          rm -rf build
+          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
             --scheme "$XCODE_SCHEME" \
             --clean \
             --disable-xcpretty \
             --verbose
+          echo "Contenu de build/ios/ipa après build :"
+          ls -la build/ios/ipa
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:
