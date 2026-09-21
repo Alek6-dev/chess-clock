@@ -96,17 +96,24 @@ workflows:
           unzip -o -q "$IPA_PATH" -d "$WORKDIR"
           APP_PATH=$(ls -d "$WORKDIR"/Payload/*.app)
 
-          echo "CFBundleVersion avant patch :"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
-          echo "UILaunchScreen dans l'ipa exporté :"
-          /usr/libexec/PlistBuddy -c "Print :UILaunchScreen" "$APP_PATH/Info.plist" || echo "(absent)"
-          echo "UIAppFonts dans l'ipa exporté :"
-          /usr/libexec/PlistBuddy -c "Print :UIAppFonts" "$APP_PATH/Info.plist" || echo "(absent)"
+          echo "Fichiers de police présents dans le bundle :"
+          ls "$APP_PATH"/*.ttf 2>/dev/null || echo "(aucun .ttf trouvé dans le bundle)"
 
           ENTITLEMENTS_PATH="$WORKDIR/entitlements.plist"
           codesign -d --entitlements :- "$APP_PATH" > "$ENTITLEMENTS_PATH"
 
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $FORCED_BUILD_NUMBER" "$APP_PATH/Info.plist"
+
+          /usr/libexec/PlistBuddy -c "Delete :UILaunchScreen" "$APP_PATH/Info.plist" 2>/dev/null
+          /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" "$APP_PATH/Info.plist"
+
+          /usr/libexec/PlistBuddy -c "Delete :UIAppFonts" "$APP_PATH/Info.plist" 2>/dev/null
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts array" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:0 string InstrumentSerif-Regular.ttf" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:1 string EBGaramond-Regular.ttf" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:2 string EBGaramond-Medium.ttf" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:3 string EBGaramond-SemiBold.ttf" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :UIAppFonts:4 string EBGaramond-Italic.ttf" "$APP_PATH/Info.plist"
 
           IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk '{print $2}')
           echo "Identité de signature utilisée pour re-signer : $IDENTITY"
@@ -115,10 +122,13 @@ workflows:
           rm -f "$IPA_PATH"
           (cd "$WORKDIR" && zip -qry - Payload) > "$IPA_PATH"
 
-          echo "CFBundleVersion après patch, dans l'ipa final :"
+          echo "Vérification finale de l'ipa patché :"
           rm -rf /tmp/ipa_verify
           unzip -o -q "$IPA_PATH" -d /tmp/ipa_verify
-          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" /tmp/ipa_verify/Payload/*.app/Info.plist
+          VERIFY_APP=$(ls -d /tmp/ipa_verify/Payload/*.app)
+          echo "CFBundleVersion : $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$VERIFY_APP/Info.plist")"
+          echo "UILaunchScreen : $(/usr/libexec/PlistBuddy -c 'Print :UILaunchScreen' "$VERIFY_APP/Info.plist")"
+          echo "UIAppFonts : $(/usr/libexec/PlistBuddy -c 'Print :UIAppFonts' "$VERIFY_APP/Info.plist")"
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:

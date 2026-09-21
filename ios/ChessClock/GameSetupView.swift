@@ -121,7 +121,7 @@ private struct HighlightedWheel: View {
     let selectedTextColor: Color
 
     private let span = 60
-    private let virtualCount = 60 * 100
+    private let virtualCount = 60 * 20
 
     @State private var virtualSelection: Int
 
@@ -130,7 +130,7 @@ private struct HighlightedWheel: View {
         self.boxColor = boxColor
         self.selectedTextColor = selectedTextColor
         let span = 60
-        let virtualCount = span * 100
+        let virtualCount = span * 20
         let middleCycleStart = (virtualCount / 2 / span) * span
         self._virtualSelection = State(initialValue: middleCycleStart + selection.wrappedValue)
     }
