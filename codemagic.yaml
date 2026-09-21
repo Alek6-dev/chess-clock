@@ -71,7 +71,9 @@ workflows:
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
             --scheme "$XCODE_SCHEME" \
-            --disable-xcpretty
+            --clean \
+            --disable-xcpretty \
+            --verbose
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:
