@@ -108,8 +108,8 @@ workflows:
 
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $FORCED_BUILD_NUMBER" "$APP_PATH/Info.plist"
 
-          echo "UILaunchStoryboardName dans l'ipa exporté :"
-          /usr/libexec/PlistBuddy -c "Print :UILaunchStoryboardName" "$APP_PATH/Info.plist" || echo "(absent)"
+          echo "UILaunchScreen dans l'ipa exporté :"
+          /usr/libexec/PlistBuddy -c "Print :UILaunchScreen" "$APP_PATH/Info.plist" || echo "(absent)"
           echo "UIAppFonts dans l'ipa exporté :"
           /usr/libexec/PlistBuddy -c "Print :UIAppFonts" "$APP_PATH/Info.plist" || echo "(absent)"
 
@@ -125,9 +125,8 @@ workflows:
           unzip -o -q "$IPA_PATH" -d /tmp/ipa_verify
           VERIFY_APP=$(ls -d /tmp/ipa_verify/Payload/*.app)
           echo "CFBundleVersion : $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$VERIFY_APP/Info.plist")"
-          echo "UILaunchStoryboardName : $(/usr/libexec/PlistBuddy -c 'Print :UILaunchStoryboardName' "$VERIFY_APP/Info.plist")"
+          echo "UILaunchScreen : $(/usr/libexec/PlistBuddy -c 'Print :UILaunchScreen' "$VERIFY_APP/Info.plist")"
           echo "UIAppFonts : $(/usr/libexec/PlistBuddy -c 'Print :UIAppFonts' "$VERIFY_APP/Info.plist")"
-          echo "Storyboard compilé présent : $(ls "$VERIFY_APP" | grep -i launchscreen || echo absent)"
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:
