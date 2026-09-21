@@ -37,6 +37,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.alek6dev.chessclock"
         XCODE_SCHEME: "ChessClock"
+        APP_STORE_CONNECT_APP_ID: "6814388062"
       xcode: latest
     scripts:
       - name: Générer le projet Xcode avec XcodeGen
@@ -55,13 +56,18 @@ workflows:
         script: keychain add-certificates
       - name: Appliquer les profils de provisioning récupérés
         script: xcode-project use-profiles
+      - name: Calculer le prochain build number depuis App Store Connect
+        script: |
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
+          echo "Dernier build number connu par Apple : $LATEST_BUILD_NUMBER"
+          echo "NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))" >> "$CM_ENV"
       - name: Builder l'ipa signé pour distribution App Store
         script: |
           cd ios
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "CURRENT_PROJECT_VERSION=$BUILD_NUMBER" \
+            --archive-xcargs "CURRENT_PROJECT_VERSION=$NEXT_BUILD_NUMBER" \
             --disable-xcpretty
     artifacts:
       - ios/build/ios/ipa/*.ipa
