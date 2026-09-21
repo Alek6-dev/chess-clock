@@ -118,7 +118,7 @@ workflows:
           codesign --force --sign "$IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --generate-entitlement-der "$APP_PATH"
 
           rm -f "$IPA_PATH"
-          (cd "$WORKDIR" && ditto -c -k --sequesterRsrc --keepParent Payload "$IPA_PATH")
+          (cd "$WORKDIR" && zip -qry "$IPA_PATH" Payload)
 
           echo "Vérification finale de l'ipa patché :"
           rm -rf /tmp/ipa_verify
