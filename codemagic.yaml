@@ -98,6 +98,10 @@ workflows:
 
           echo "CFBundleVersion avant patch :"
           /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
+          echo "UILaunchScreen dans l'ipa exporté :"
+          /usr/libexec/PlistBuddy -c "Print :UILaunchScreen" "$APP_PATH/Info.plist" || echo "(absent)"
+          echo "UIAppFonts dans l'ipa exporté :"
+          /usr/libexec/PlistBuddy -c "Print :UIAppFonts" "$APP_PATH/Info.plist" || echo "(absent)"
 
           ENTITLEMENTS_PATH="$WORKDIR/entitlements.plist"
           codesign -d --entitlements :- "$APP_PATH" > "$ENTITLEMENTS_PATH"
