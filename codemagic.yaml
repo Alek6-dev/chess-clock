@@ -89,7 +89,7 @@ workflows:
           echo "Contenu de build/ios/ipa après build :"
           ls -la build/ios/ipa
 
-          IPA_PATH=$(ls build/ios/ipa/*.ipa)
+          IPA_PATH=$(cd build/ios/ipa && pwd)/$(ls build/ios/ipa)
           LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
           FORCED_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
           echo "Build number forcé dans l'ipa final : $FORCED_BUILD_NUMBER"
@@ -118,7 +118,7 @@ workflows:
           codesign --force --sign "$IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --generate-entitlement-der "$APP_PATH"
 
           rm -f "$IPA_PATH"
-          (cd "$WORKDIR" && zip -qry - Payload) > "$IPA_PATH"
+          (cd "$WORKDIR" && ditto -c -k --sequesterRsrc --keepParent Payload "$IPA_PATH")
 
           echo "Vérification finale de l'ipa patché :"
           rm -rf /tmp/ipa_verify
