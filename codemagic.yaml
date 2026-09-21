@@ -65,6 +65,13 @@ workflows:
         script: keychain add-certificates
       - name: Appliquer les profils de provisioning récupérés
         script: xcode-project use-profiles
+      - name: Empêcher Xcode d'écraser le build number à l'export
+        script: |
+          echo "Contenu de export_options.plist avant modification :"
+          cat "$HOME/export_options.plist"
+          plutil -replace manageAppVersionAndBuildNumber -bool NO "$HOME/export_options.plist"
+          echo "Contenu de export_options.plist après modification :"
+          cat "$HOME/export_options.plist"
       - name: Builder l'ipa signé pour distribution App Store
         script: |
           cd ios
