@@ -51,6 +51,8 @@ workflows:
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
+      - name: Importer le certificat dans le keychain
+        script: keychain add-certificates
       - name: Appliquer les profils de provisioning récupérés
         script: xcode-project use-profiles
       - name: Builder l'ipa signé pour distribution App Store
