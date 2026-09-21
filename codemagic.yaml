@@ -61,7 +61,7 @@ workflows:
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "CURRENT_PROJECT_VERSION=$CM_BUILD_NUMBER" \
+            --archive-xcargs "CURRENT_PROJECT_VERSION=$BUILD_NUMBER" \
             --disable-xcpretty
     artifacts:
       - ios/build/ios/ipa/*.ipa
