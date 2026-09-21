@@ -32,9 +32,6 @@ workflows:
     integrations:
       app_store_connect: Alek6dev
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.alek6dev.chessclock
       vars:
         BUNDLE_ID: "com.alek6dev.chessclock"
         XCODE_SCHEME: "ChessClock"
