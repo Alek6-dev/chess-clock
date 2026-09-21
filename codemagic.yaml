@@ -72,6 +72,10 @@ workflows:
       - name: Builder l'ipa signé pour distribution App Store
         script: |
           cd ios
+          echo "=== Diagnostic : réglages resolus en configuration Release (celle de l'archive) ==="
+          xcodebuild -project ChessClock.xcodeproj -scheme "$XCODE_SCHEME" -configuration Release -showBuildSettings 2>/dev/null \
+            | grep -E "CURRENT_PROJECT_VERSION|MARKETING_VERSION|GENERATE_INFOPLIST_FILE|INFOPLIST_FILE |CONFIGURATION ="
+          echo "=== Fin diagnostic ==="
           echo "Contenu de build/ios/ipa avant build :"
           ls -la build/ios/ipa 2>/dev/null || echo "(dossier absent, rien à nettoyer)"
           rm -rf build
