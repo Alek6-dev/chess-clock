@@ -58,7 +58,8 @@ workflows:
           cd ios
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
-            --scheme "$XCODE_SCHEME"
+            --scheme "$XCODE_SCHEME" \
+            --disable-xcpretty
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:
