@@ -84,10 +84,37 @@ workflows:
             --verbose
           echo "Contenu de build/ios/ipa après build :"
           ls -la build/ios/ipa
-          rm -rf /tmp/ipa_check
-          unzip -o -q build/ios/ipa/*.ipa -d /tmp/ipa_check
-          echo "CFBundleVersion réellement présent dans l'ipa exporté :"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" /tmp/ipa_check/Payload/*.app/Info.plist
+
+          IPA_PATH=$(ls build/ios/ipa/*.ipa)
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
+          FORCED_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          echo "Build number forcé dans l'ipa final : $FORCED_BUILD_NUMBER"
+
+          rm -rf /tmp/ipa_patch
+          WORKDIR=/tmp/ipa_patch
+          mkdir -p "$WORKDIR"
+          unzip -o -q "$IPA_PATH" -d "$WORKDIR"
+          APP_PATH=$(ls -d "$WORKDIR"/Payload/*.app)
+
+          echo "CFBundleVersion avant patch :"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
+
+          ENTITLEMENTS_PATH="$WORKDIR/entitlements.plist"
+          codesign -d --entitlements :- "$APP_PATH" > "$ENTITLEMENTS_PATH"
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $FORCED_BUILD_NUMBER" "$APP_PATH/Info.plist"
+
+          IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk '{print $2}')
+          echo "Identité de signature utilisée pour re-signer : $IDENTITY"
+          codesign --force --sign "$IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --generate-entitlement-der "$APP_PATH"
+
+          rm -f "$IPA_PATH"
+          (cd "$WORKDIR" && zip -qry - Payload) > "$IPA_PATH"
+
+          echo "CFBundleVersion après patch, dans l'ipa final :"
+          rm -rf /tmp/ipa_verify
+          unzip -o -q "$IPA_PATH" -d /tmp/ipa_verify
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" /tmp/ipa_verify/Payload/*.app/Info.plist
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:
