@@ -56,14 +56,13 @@ workflows:
         script: keychain add-certificates
       - name: Appliquer les profils de provisioning récupérés
         script: xcode-project use-profiles
-      - name: Calculer le prochain build number depuis App Store Connect
-        script: |
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
-          echo "Dernier build number connu par Apple : $LATEST_BUILD_NUMBER"
-          echo "NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))" >> "$CM_ENV"
       - name: Builder l'ipa signé pour distribution App Store
         script: |
           cd ios
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
+          NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          echo "Dernier build number connu par Apple : $LATEST_BUILD_NUMBER"
+          echo "Build number utilisé pour cet archive : $NEXT_BUILD_NUMBER"
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
             --scheme "$XCODE_SCHEME" \
