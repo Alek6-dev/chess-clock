@@ -64,13 +64,10 @@ workflows:
       - name: Importer le certificat dans le keychain
         script: keychain add-certificates
       - name: Appliquer les profils de provisioning récupérés
-        script: xcode-project use-profiles
-      - name: Empêcher Xcode d'écraser le build number à l'export
         script: |
-          echo "Contenu de export_options.plist avant modification :"
-          cat "$HOME/export_options.plist"
-          plutil -replace manageAppVersionAndBuildNumber -bool NO "$HOME/export_options.plist"
-          echo "Contenu de export_options.plist après modification :"
+          xcode-project use-profiles \
+            --custom-export-options '{"manageAppVersionAndBuildNumber": false}'
+          echo "Contenu de export_options.plist généré :"
           cat "$HOME/export_options.plist"
       - name: Builder l'ipa signé pour distribution App Store
         script: |
@@ -87,6 +84,10 @@ workflows:
             --verbose
           echo "Contenu de build/ios/ipa après build :"
           ls -la build/ios/ipa
+          rm -rf /tmp/ipa_check
+          unzip -o -q build/ios/ipa/*.ipa -d /tmp/ipa_check
+          echo "CFBundleVersion réellement présent dans l'ipa exporté :"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" /tmp/ipa_check/Payload/*.app/Info.plist
     artifacts:
       - ios/build/ios/ipa/*.ipa
     publishing:
