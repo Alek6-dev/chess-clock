@@ -66,7 +66,7 @@ workflows:
       - name: Appliquer les profils de provisioning récupérés
         script: |
           xcode-project use-profiles \
-            --custom-export-options '{"manageAppVersionAndBuildNumber": false}'
+            --custom-export-options '{"manageAppVersionAndBuildNumber": false, "testFlightInternalTestingOnly": true}'
           echo "Contenu de export_options.plist généré :"
           cat "$HOME/export_options.plist"
       - name: Builder l'ipa signé pour distribution App Store
