@@ -40,6 +40,15 @@ workflows:
         APP_STORE_CONNECT_APP_ID: "6814388062"
       xcode: latest
     scripts:
+      - name: Calculer le build number et l'écrire dans project.yml
+        script: |
+          cd ios
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
+          NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          echo "Dernier build number connu par Apple : $LATEST_BUILD_NUMBER"
+          echo "Build number utilisé pour ce build : $NEXT_BUILD_NUMBER"
+          sed -i '' "s/CURRENT_PROJECT_VERSION: \".*\"/CURRENT_PROJECT_VERSION: \"$NEXT_BUILD_NUMBER\"/" project.yml
+          grep CURRENT_PROJECT_VERSION project.yml
       - name: Générer le projet Xcode avec XcodeGen
         script: |
           brew install xcodegen
@@ -59,14 +68,9 @@ workflows:
       - name: Builder l'ipa signé pour distribution App Store
         script: |
           cd ios
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_CONNECT_APP_ID" --all-versions)
-          NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
-          echo "Dernier build number connu par Apple : $LATEST_BUILD_NUMBER"
-          echo "Build number utilisé pour cet archive : $NEXT_BUILD_NUMBER"
           xcode-project build-ipa \
             --project ChessClock.xcodeproj \
             --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "CURRENT_PROJECT_VERSION=$NEXT_BUILD_NUMBER" \
             --disable-xcpretty
     artifacts:
       - ios/build/ios/ipa/*.ipa
